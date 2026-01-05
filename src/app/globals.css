@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 0 0% 3%; /* ดำเกือบสนิท สบายตา */
+  --foreground: 0 0% 98%;
+  --accent: 250 100% 60%; /* สีม่วง Electric สำหรับจุดเด่น */
+}
+
+body {
+  color: hsl(var(--foreground));
+  background: hsl(var(--background));
+  font-family: Arial, Helvetica, sans-serif;
+  overflow-x: hidden; /* ป้องกัน scroll แนวนอน */
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: hsl(var(--background));
+}
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 4px;
+}
+/* ซ่อน Scrollbar ทั้งหมด (Chrome, Safari, Opera) */
+::-webkit-scrollbar {
+  display: none;
+}
+
+/* ซ่อน Scrollbar ทั้งหมด (IE, Edge, Firefox) */
+* {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
