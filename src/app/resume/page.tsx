@@ -12,12 +12,12 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
-const PORTFOLIO_URL = "https://your-portfolio.vercel.app" 
+const PORTFOLIO_URL = "https://portfolio-web-akkalak.vercel.app/" 
 
 export default function ResumePage() {
   const [profile, setProfile] = useState<any>({
      // Default Value ป้องกันจอขาวถ้าเน็ตช้า
-     display_name: 'LOADING...',
+     display_name: 'LOADING',
      hard_skills: [],
      soft_skills: [],
      education: [],
