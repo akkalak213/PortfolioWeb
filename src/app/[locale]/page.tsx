@@ -5,7 +5,7 @@ import type { Locale } from '@/i18n/routing'
 import { Badge } from '@/components/ui/Badge'
 import { buttonClasses } from '@/components/ui/Button'
 import { Section } from '@/components/ui/Section'
-import { getIcon } from '@/lib/icons'
+import { ServiceIcon } from '@/components/ui/ServiceIcon'
 import { getSiteSettings } from '@/lib/settings'
 import { getActiveServices, getHomeStats } from '@/server/queries'
 
@@ -116,35 +116,33 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
           </p>
         ) : (
           <ul className="grid gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-2 lg:grid-cols-3">
-            {services.map((service) => {
-              const Icon = getIcon(service.icon)
-              return (
-                <li key={service.id} className="bg-background">
-                  <Link
-                    href={`/services/${service.slug}`}
-                    className="group flex h-full flex-col gap-4 p-8 transition-colors hover:bg-subtle"
-                  >
-                    <span className="inline-flex h-11 w-11 items-center justify-center rounded-md bg-accent-subtle text-accent">
-                      <Icon size={20} strokeWidth={1.6} />
-                    </span>
-                    <h3 className="font-display text-2xl">
-                      {isThai ? service.titleTh : service.titleEn}
-                    </h3>
-                    <p className="flex-1 text-sm leading-relaxed text-muted-foreground text-pretty">
-                      {isThai ? service.taglineTh : service.taglineEn}
-                    </p>
-                    <span className="inline-flex items-center gap-1.5 text-sm font-medium text-accent">
-                      {tc('learnMore')}
-                      <ArrowUpRight
-                        size={15}
-                        strokeWidth={2}
-                        className="transition-transform duration-200 ease-out group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
-                      />
-                    </span>
-                  </Link>
-                </li>
-              )
-            })}
+            {services.map((service) => (
+              <li key={service.id} className="bg-background">
+                <Link
+                  href={`/services/${service.slug}`}
+                  className="group flex h-full flex-col gap-4 p-8 transition-colors hover:bg-subtle"
+                >
+                  <span className="inline-flex h-11 w-11 items-center justify-center rounded-md bg-accent-subtle text-accent">
+                    <ServiceIcon name={service.icon} size={20} strokeWidth={1.6} />
+                  </span>
+                  <h3 className="font-display text-2xl">
+                    {isThai ? service.titleTh : service.titleEn}
+                  </h3>
+                  <p className="flex-1 text-sm leading-relaxed text-muted-foreground text-pretty">
+                    {isThai ? service.taglineTh : service.taglineEn}
+                  </p>
+                  <span className="inline-flex items-center gap-1.5 text-sm font-medium text-accent">
+                    {tc('learnMore')}
+                    <ArrowUpRight
+                      size={15}
+                      strokeWidth={2}
+                      aria-hidden
+                      className="transition-transform duration-200 ease-out group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+                    />
+                  </span>
+                </Link>
+              </li>
+            ))}
           </ul>
         )}
       </Section>
