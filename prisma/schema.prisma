@@ -1,0 +1,561 @@
+// Alexan Production — database schema
+// Postgres (Railway) + Prisma 7
+//
+// แนวทาง: เนื้อหาที่ทีมเขียนเอง เก็บคอลัมน์คู่ Th/En
+// ส่วนเนื้อหาที่ลูกค้าส่งเข้ามา (รีวิว, lead) เก็บช่องเดียว + บันทึก locale ที่ใช้ตอนส่ง
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ───────────────────────────── Enums ─────────────────────────────
+
+enum UserRole {
+  ADMIN
+  EDITOR
+}
+
+/// บริการ 6 เสาหลักของ Alexan Production
+enum ServiceCategory {
+  WEB // เว็บไซต์
+  WEB_APP // เว็บแอปพลิเคชัน
+  MOBILE_APP // แอปพลิเคชันมือถือ
+  PHOTOGRAPHY // งานถ่ายภาพ
+  VIDEO // งานวิดีโอ
+  STUDIO // เช่าสตูดิโอ
+}
+
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO_EMBED
+}
+
+enum PriceUnit {
+  PROJECT // ต่อโปรเจกต์
+  DAY // ต่อวัน
+  HALF_DAY // ต่อครึ่งวัน
+  HOUR // ต่อชั่วโมง
+  MONTH // ต่อเดือน
+  PERSON // ต่อคน
+  CUSTOM // ประเมินตามงาน
+}
+
+enum EquipmentCategory {
+  CAMERA
+  LENS
+  LIGHTING
+  AUDIO
+  GRIP // ขาตั้ง ริก สไลเดอร์ จิมบอล
+  DRONE
+  ACCESSORY
+}
+
+enum EquipmentStatus {
+  AVAILABLE
+  RENTED
+  MAINTENANCE
+  RETIRED
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum LeadSource {
+  CONTACT // ฟอร์มหน้าติดต่อ
+  QUOTE // ขอใบเสนอราคา
+  RENTAL // สอบถามเช่าอุปกรณ์
+  SERVICE_PAGE // ฟอร์มในหน้าบริการ
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUOTED
+  WON
+  LOST
+}
+
+enum QuoteStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  DECLINED
+  EXPIRED
+}
+
+// ───────────────────────── ผู้ใช้หลังบ้าน ─────────────────────────
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String
+  passwordHash String
+  role         UserRole  @default(EDITOR)
+  avatarUrl    String?
+  isActive     Boolean   @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  projects   Project[]
+  posts      Post[]
+  quotes     Quote[]
+  leadNotes  LeadNote[]
+  mediaFiles MediaAsset[]
+}
+
+// ─────────────────────────── บริการ ───────────────────────────
+
+model Service {
+  id       String          @id @default(cuid())
+  slug     String          @unique
+  category ServiceCategory @unique
+
+  titleTh       String
+  titleEn       String
+  taglineTh     String
+  taglineEn     String
+  descriptionTh String  @db.Text
+  descriptionEn String  @db.Text
+  /// ชื่อไอคอน lucide-react เช่น "Camera"
+  icon          String
+  coverImage    String?
+  accentColor   String?
+
+  highlightsTh String[]
+  highlightsEn String[]
+  /// [{ title, detail }] — ขั้นตอนการทำงาน
+  processTh    Json?
+  processEn    Json?
+  /// [{ question, answer }]
+  faqTh        Json?
+  faqEn        Json?
+
+  seoTitleTh       String?
+  seoTitleEn       String?
+  seoDescriptionTh String?
+  seoDescriptionEn String?
+
+  order     Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  packages ServicePackage[]
+  projects Project[]
+
+  @@index([isActive, order])
+}
+
+model ServicePackage {
+  id        String  @id @default(cuid())
+  serviceId String
+  service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  nameTh          String
+  nameEn          String
+  descriptionTh   String?   @db.Text
+  descriptionEn   String?   @db.Text
+  priceFrom       Decimal?  @db.Decimal(12, 2)
+  priceUnit       PriceUnit @default(PROJECT)
+  /// true = แสดง "เริ่มต้นที่" หน้าราคา, false = ราคาตายตัว
+  isStartingPrice Boolean   @default(true)
+  includesTh      String[]
+  includesEn      String[]
+  isPopular       Boolean   @default(false)
+  isActive        Boolean   @default(true)
+  order           Int       @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([serviceId, order])
+}
+
+// ─────────────────────────── ผลงาน ───────────────────────────
+
+model Project {
+  id       String          @id @default(cuid())
+  slug     String          @unique
+  category ServiceCategory
+
+  titleTh   String
+  titleEn   String
+  summaryTh String  @db.Text
+  summaryEn String  @db.Text
+  /// เนื้อหา case study แบบ Markdown
+  bodyTh    String? @db.Text
+  bodyEn    String? @db.Text
+
+  clientName String?
+  year       Int?
+  location   String?
+
+  coverImage    String
+  coverBlurData String?
+  /// ลิงก์ YouTube / Vimeo สำหรับงานวิดีโอ
+  videoUrl      String?
+  liveUrl       String?
+  repoUrl       String?
+
+  techStack String[]
+  /// [{ role, name }] — เครดิตทีมงานสำหรับงานภาพ/วิดีโอ
+  creditsTh Json?
+  creditsEn Json?
+
+  seoTitleTh       String?
+  seoTitleEn       String?
+  seoDescriptionTh String?
+  seoDescriptionEn String?
+
+  isFeatured  Boolean       @default(false)
+  status      ContentStatus @default(DRAFT)
+  publishedAt DateTime?
+  order       Int           @default(0)
+  viewCount   Int           @default(0)
+
+  serviceId String?
+  service   Service? @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  authorId  String?
+  author    User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  media ProjectMedia[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, category, publishedAt])
+  @@index([status, isFeatured, order])
+}
+
+model ProjectMedia {
+  id        String  @id @default(cuid())
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  type      MediaType @default(IMAGE)
+  url       String
+  blurData  String?
+  width     Int?
+  height    Int?
+  captionTh String?
+  captionEn String?
+  altTh     String?
+  altEn     String?
+  order     Int       @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([projectId, order])
+}
+
+// ──────────────────── อุปกรณ์ให้เช่า (โชว์อย่างเดียว) ────────────────────
+
+model Equipment {
+  id       String            @id @default(cuid())
+  slug     String            @unique
+  category EquipmentCategory
+
+  brand String
+  model String
+
+  nameTh        String
+  nameEn        String
+  descriptionTh String? @db.Text
+  descriptionEn String? @db.Text
+  /// [{ label, value }] — สเปกอุปกรณ์
+  specs         Json?
+
+  dailyRate     Decimal? @db.Decimal(10, 2)
+  weeklyRate    Decimal? @db.Decimal(10, 2)
+  depositAmount Decimal? @db.Decimal(10, 2)
+
+  image   String?
+  gallery String[]
+
+  quantity   Int             @default(1)
+  status     EquipmentStatus @default(AVAILABLE)
+  isFeatured Boolean         @default(false)
+  isActive   Boolean         @default(true)
+  order      Int             @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  leadItems LeadItem[]
+
+  @@index([isActive, category, order])
+}
+
+// ─────────────────────────── รีวิว ───────────────────────────
+
+model Review {
+  id String @id @default(cuid())
+
+  authorName   String
+  /// ตำแหน่ง / ชื่อบริษัทของผู้รีวิว
+  authorRole   String?
+  authorAvatar String?
+  /// ไม่แสดงหน้าเว็บ ใช้ติดต่อกลับ / ยืนยันตัวตน
+  submitterEmail String?
+
+  content         String           @db.Text
+  rating          Int
+  serviceCategory ServiceCategory?
+  /// ภาษาที่ผู้รีวิวใช้เขียน — ใช้เลือก font/lang attribute ตอนแสดงผล
+  locale          String           @default("th")
+
+  status     ReviewStatus @default(PENDING)
+  isPinned   Boolean      @default(false)
+  /// คำตอบกลับจากทาง Alexan Production
+  replyTh    String?      @db.Text
+  replyEn    String?      @db.Text
+  repliedAt  DateTime?
+  /// hash ของ IP — กันสแปมโดยไม่เก็บ IP ดิบ
+  ipHash     String?
+  userAgent  String?
+  createdAt  DateTime     @default(now())
+  approvedAt DateTime?
+  updatedAt  DateTime     @updatedAt
+
+  @@index([status, isPinned, createdAt])
+  @@index([ipHash, createdAt])
+}
+
+// ──────────────────── คำขอจากลูกค้า (Lead) ────────────────────
+
+model Lead {
+  id String @id @default(cuid())
+  /// รหัสอ้างอิงให้ลูกค้า เช่น AX-2608-0042
+  refCode String @unique
+
+  name    String
+  email   String
+  phone   String?
+  company String?
+
+  source        LeadSource        @default(CONTACT)
+  services      ServiceCategory[]
+  budgetRange   String?
+  preferredDate DateTime?
+  message       String            @db.Text
+  locale        String            @default("th")
+
+  status LeadStatus @default(NEW)
+  ipHash String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items  LeadItem[]
+  notes  LeadNote[]
+  quotes Quote[]
+
+  @@index([status, createdAt])
+  @@index([ipHash, createdAt])
+}
+
+/// อุปกรณ์ที่ลูกค้าสนใจเช่า แนบมากับ Lead
+model LeadItem {
+  id     String @id @default(cuid())
+  leadId String
+  lead   Lead   @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  equipmentId String?
+  equipment   Equipment? @relation(fields: [equipmentId], references: [id], onDelete: SetNull)
+  /// ชื่ออุปกรณ์ ณ เวลาที่ขอ — กันข้อมูลหายถ้าอุปกรณ์ถูกลบภายหลัง
+  labelSnapshot String
+  quantity      Int     @default(1)
+  days          Int?
+
+  @@index([leadId])
+}
+
+model LeadNote {
+  id     String @id @default(cuid())
+  leadId String
+  lead   Lead   @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  authorId String?
+  author   User?   @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  body      String   @db.Text
+  createdAt DateTime @default(now())
+
+  @@index([leadId, createdAt])
+}
+
+// ──────────────────── ใบเสนอราคา ────────────────────
+
+model Quote {
+  id String @id @default(cuid())
+  /// เลขที่ใบเสนอราคา เช่น QT-2608-0007
+  quoteNumber String @unique
+
+  leadId String?
+  lead   Lead?   @relation(fields: [leadId], references: [id], onDelete: SetNull)
+
+  customerName    String
+  customerCompany String?
+  customerAddress String? @db.Text
+  customerTaxId   String?
+  customerEmail   String
+  customerPhone   String?
+
+  /// ภาษาที่ใช้ออกใบเสนอราคา (th | en)
+  locale     String   @default("th")
+  currency   String   @default("THB")
+  issueDate  DateTime @default(now())
+  validUntil DateTime
+
+  subtotal Decimal @default(0) @db.Decimal(12, 2)
+  discount Decimal @default(0) @db.Decimal(12, 2)
+  /// อัตราภาษีมูลค่าเพิ่ม (%)
+  vatRate  Decimal @default(7) @db.Decimal(5, 2)
+  vatAmount Decimal @default(0) @db.Decimal(12, 2)
+  /// อัตราภาษีหัก ณ ที่จ่าย (%) — ปกติ 3% สำหรับค่าบริการ
+  withholdingRate   Decimal @default(0) @db.Decimal(5, 2)
+  withholdingAmount Decimal @default(0) @db.Decimal(12, 2)
+  total             Decimal @default(0) @db.Decimal(12, 2)
+
+  notes     String? @db.Text
+  termsText String? @db.Text
+
+  status     QuoteStatus @default(DRAFT)
+  sentAt     DateTime?
+  acceptedAt DateTime?
+
+  createdById String?
+  createdBy   User?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items QuoteItem[]
+
+  @@index([status, issueDate])
+}
+
+model QuoteItem {
+  id      String @id @default(cuid())
+  quoteId String
+  quote   Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+
+  description String  @db.Text
+  quantity    Decimal @default(1) @db.Decimal(10, 2)
+  /// หน่วย เช่น วัน / งาน / ชิ้น
+  unit        String?
+  unitPrice   Decimal @default(0) @db.Decimal(12, 2)
+  amount      Decimal @default(0) @db.Decimal(12, 2)
+  order       Int     @default(0)
+
+  @@index([quoteId, order])
+}
+
+// ─────────────────────── บทความ / บล็อก ───────────────────────
+
+model Post {
+  id   String @id @default(cuid())
+  slug String @unique
+
+  titleTh   String
+  titleEn   String
+  excerptTh String @db.Text
+  excerptEn String @db.Text
+  bodyTh    String @db.Text
+  bodyEn    String @db.Text
+
+  coverImage    String?
+  coverBlurData String?
+  tags          String[]
+
+  seoTitleTh       String?
+  seoTitleEn       String?
+  seoDescriptionTh String?
+  seoDescriptionEn String?
+
+  status         ContentStatus @default(DRAFT)
+  publishedAt    DateTime?
+  readingMinutes Int?
+  viewCount      Int           @default(0)
+  isFeatured     Boolean       @default(false)
+
+  authorId String?
+  author   User?   @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, publishedAt])
+}
+
+// ─────────────────────────── ทีมงาน ───────────────────────────
+
+model TeamMember {
+  id     String  @id @default(cuid())
+  name   String
+  roleTh String
+  roleEn String
+  bioTh  String? @db.Text
+  bioEn  String? @db.Text
+  photo  String?
+  email  String?
+  /// { instagram, facebook, linkedin, github, website }
+  socials Json?
+
+  order    Int     @default(0)
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, order])
+}
+
+// ──────────────── คลังไฟล์ (Cloudflare R2) ────────────────
+
+model MediaAsset {
+  id String @id @default(cuid())
+  /// object key ใน R2
+  key String @unique
+  url String
+
+  fileName String
+  mimeType String
+  size     Int
+  width    Int?
+  height   Int?
+  blurData String?
+  altTh    String?
+  altEn    String?
+  folder   String @default("uploads")
+
+  uploadedById String?
+  uploadedBy   User?   @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@index([folder, createdAt])
+}
+
+// ──────── ค่าตั้งค่าเว็บที่แก้ได้จากหลังบ้านโดยไม่ต้อง deploy ────────
+
+model SiteSetting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}

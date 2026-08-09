@@ -1,0 +1,106 @@
+{
+  "brand": {
+    "name": "Alexan Production",
+    "nameShort": "Alexan",
+    "tagline": "Full-service production house"
+  },
+  "nav": {
+    "home": "Home",
+    "services": "Services",
+    "work": "Work",
+    "rental": "Rentals",
+    "reviews": "Reviews",
+    "blog": "Journal",
+    "about": "About",
+    "contact": "Contact",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "menu": "Menu"
+  },
+  "common": {
+    "getQuote": "Request a quote",
+    "contactUs": "Contact us",
+    "viewWork": "View work",
+    "viewAll": "View all",
+    "viewDetails": "View details",
+    "readMore": "Read more",
+    "learnMore": "Learn more",
+    "backTo": "Back to {page}",
+    "loading": "Loading",
+    "empty": "Nothing here yet",
+    "error": "Something went wrong. Please try again.",
+    "startingFrom": "From",
+    "perProject": "per project",
+    "perDay": "per day",
+    "perHalfDay": "per half day",
+    "perHour": "per hour",
+    "perMonth": "per month",
+    "perPerson": "per person",
+    "customPrice": "Quoted per project",
+    "baht": "THB",
+    "required": "Required",
+    "optional": "Optional",
+    "submit": "Submit",
+    "sending": "Sending",
+    "skipToContent": "Skip to main content"
+  },
+  "theme": {
+    "label": "Theme",
+    "toggle": "Toggle light and dark mode",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "locale": {
+    "label": "Language",
+    "switch": "Change language"
+  },
+  "serviceCategory": {
+    "WEB": "Websites",
+    "WEB_APP": "Web apps",
+    "MOBILE_APP": "Mobile apps",
+    "PHOTOGRAPHY": "Photography",
+    "VIDEO": "Video",
+    "STUDIO": "Studio"
+  },
+  "equipmentCategory": {
+    "all": "All",
+    "CAMERA": "Cameras",
+    "LENS": "Lenses",
+    "LIGHTING": "Lighting",
+    "AUDIO": "Audio",
+    "GRIP": "Grip & gimbals",
+    "DRONE": "Drones",
+    "ACCESSORY": "Accessories"
+  },
+  "home": {
+    "metaTitle": "Alexan Production · Websites, apps, photography and film",
+    "metaDescription": "A full-service production house building websites, web apps and mobile apps, shooting photography and video, and renting studio space and camera gear.",
+    "servicesEyebrow": "What we do",
+    "servicesTitle": "Six things we do well",
+    "servicesSubtitle": "Digital and visual work under one roof, so you are not the one coordinating three vendors.",
+    "workEyebrow": "Selected work",
+    "workTitle": "Projects we are proud of",
+    "workSubtitle": "Filter by the kind of work you are looking for.",
+    "reviewsEyebrow": "Client feedback",
+    "reviewsTitle": "What clients say about us",
+    "statsProjects": "Projects delivered",
+    "statsClients": "Clients served",
+    "statsYears": "Years in the field",
+    "statsRating": "Average rating",
+    "ctaTitle": "Already have a project in mind?",
+    "ctaSubtitle": "Tell us roughly what you need and we will reply within one business day with an approach and a price range.",
+    "ctaNote": "The first consultation is free"
+  },
+  "footer": {
+    "aboutBlurb": "A production house that keeps digital and visual work in one team, from first idea to final delivery.",
+    "servicesHeading": "Services",
+    "companyHeading": "Company",
+    "contactHeading": "Contact",
+    "followHeading": "Follow us",
+    "openingHours": "Opening hours",
+    "rights": "All rights reserved",
+    "privacy": "Privacy policy",
+    "terms": "Terms of use"
+  }
+}

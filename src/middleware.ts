@@ -1,23 +1,12 @@
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import createMiddleware from 'next-intl/middleware'
+import { routing } from './i18n/routing'
 
-// หมายเหตุ: ใน Production จริง ควรใช้ @supabase/ssr เพื่อจัดการ Cookie ฝั่ง Server
-// แต่ถ้าใช้แบบง่าย (Client Login) เราสามารถเช็คการมีอยู่ของ Cookie 'sb-access-token' หรือ 'admin_access'
-export function middleware(request: NextRequest) {
-  
-  // 1. เช็ค Supabase Session Token (ชื่อ Cookie จะขึ้นต้นด้วย sb-)
-  // หรือ 2. เช็ค Cookie 'admin_access' ที่เราแอบ set ไว้ใน LoginModal เพื่อความเข้ากันได้
-  const hasSupabaseSession = request.cookies.getAll().some(c => c.name.startsWith('sb-') && c.name.endsWith('-auth-token'))
-  const hasLegacyCookie = request.cookies.get('admin_access')?.value === 'GRANTED'
-
-  if (!hasSupabaseSession && !hasLegacyCookie) {
-    return NextResponse.redirect(new URL('/', request.url))
-  }
-
-  return NextResponse.next()
-}
+export default createMiddleware(routing)
 
 export const config = {
-  matcher: '/admin/:path*',
+  /**
+   * ให้ next-intl จัดการเฉพาะหน้าเว็บสาธารณะ
+   * ข้าม: api, ไฟล์ static ของ Next, หลังบ้าน (/admin ใช้ภาษาไทยอย่างเดียว) และไฟล์ที่มีนามสกุล
+   */
+  matcher: ['/((?!api|admin|_next|_vercel|.*\\..*).*)'],
 }
