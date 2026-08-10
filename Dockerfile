@@ -7,7 +7,11 @@
 # แก้โค้ดแล้ว build ใหม่จะไม่ต้อง npm ci ซ้ำทุกครั้ง
 # ─────────────────────────────────────────────────────────────
 
-FROM node:22-alpine AS base
+# node 24 มาพร้อม npm 11 ซึ่งเป็นเมเจอร์เดียวกับที่ใช้สร้าง package-lock.json
+# ห้ามลดกลับไป node 22 (npm 10) — npm สองเมเจอร์นี้แก้ peer dependency ที่ขัดกันคนละแบบ
+# (next ขอ @swc/helpers 0.5.15 เป๊ะ ๆ ส่วน @swc/core ที่มากับ next-intl ขอ >=0.5.17)
+# npm 10 จะมองว่า lock ไม่ครบแล้วหยุดที่ npm ci ทันที
+FROM node:24-alpine AS base
 # Prisma และ Next บน Alpine ต้องการ libc6-compat
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
