@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils'
 export function Wordmark({ className, compact = false }: { className?: string; compact?: boolean }) {
   return (
     <span className={cn('inline-flex items-baseline gap-2 select-none', className)}>
-      <span className="font-display text-xl leading-none tracking-[0.02em] md:text-[1.6rem]">
+      <span className="wordmark text-xl leading-none md:text-[1.6rem]">
         Alexan
         <span className="text-accent">.</span>
       </span>

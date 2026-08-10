@@ -12,10 +12,10 @@ import '../globals.css'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans', display: 'swap' })
 
-const plexSansThai = IBM_Plex_Sans_Thai({
+const plexThai = IBM_Plex_Sans_Thai({
   subsets: ['thai', 'latin'],
-  weight: ['300', '400', '500', '600', '700'],
-  variable: '--font-sans-th',
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-thai',
   display: 'swap',
 })
 
@@ -41,7 +41,7 @@ export default async function AdminRootLayout({ children }: { children: React.Re
     <html
       lang="th"
       suppressHydrationWarning
-      className={`${inter.variable} ${plexSansThai.variable} ${instrumentSerif.variable}`}
+      className={`${inter.variable} ${plexThai.variable} ${instrumentSerif.variable}`}
     >
       <body className="min-h-dvh bg-background font-sans text-foreground antialiased">
         <NextIntlClientProvider locale="th" messages={messages}>

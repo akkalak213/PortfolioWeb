@@ -33,8 +33,9 @@ const config: Config = {
         destructive: { DEFAULT: token('destructive'), foreground: token('destructive-foreground') },
       },
       fontFamily: {
-        sans: ['var(--font-sans)', 'var(--font-sans-th)', 'system-ui', 'sans-serif'],
-        display: ['var(--font-display)', 'var(--font-display-th)', 'Georgia', 'serif'],
+        // ตัว stack จริงถูกสลับตามภาษาใน globals.css ที่นี่แค่ชี้ไปที่ตัวแปร
+        sans: 'var(--stack-sans)',
+        display: 'var(--stack-display)',
         mono: ['var(--font-mono)', 'ui-monospace', 'monospace'],
       },
       fontSize: {

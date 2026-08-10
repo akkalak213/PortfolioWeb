@@ -127,7 +127,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
             {tc('empty')}
           </p>
         ) : (
-          <ul className="grid gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="reveal-stagger grid gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-2 lg:grid-cols-3">
             {services.map((service) => (
               <li key={service.id} className="bg-background">
                 <Link

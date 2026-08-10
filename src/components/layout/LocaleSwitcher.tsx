@@ -17,7 +17,10 @@ export function LocaleSwitcher({ className }: { className?: string }) {
     if (next === active) return
     startTransition(() => {
       // usePathname ของ next-intl คืนค่าโดยตัด prefix ภาษาออกแล้ว จึงอยู่หน้าเดิมหลังสลับภาษา
-      router.replace(pathname, { locale: next })
+      //
+      // scroll: false สำคัญมาก — ค่าเริ่มต้นของ Next คือดีดกลับไปหัวหน้าทุกครั้งที่เปลี่ยน route
+      // คนที่อ่านอยู่กลางหน้าแล้วกดสลับภาษาจะเสียตำแหน่งที่อ่านค้างไว้ทันที
+      router.replace(pathname, { locale: next, scroll: false })
     })
   }
 
@@ -40,7 +43,9 @@ export function LocaleSwitcher({ className }: { className?: string }) {
             onClick={() => switchTo(locale)}
             aria-current={isActive ? 'true' : undefined}
             className={cn(
-              'rounded-[5px] px-2 py-1 text-xs font-medium transition-colors',
+              // ล็อกความกว้างไว้เท่ากันทั้งสองปุ่ม ("ไทย" กับ "EN" กว้างไม่เท่ากัน)
+              // ไม่งั้นตอนสลับภาษา ฟอนต์เปลี่ยน ความกว้างปุ่มเปลี่ยน แล้วดันของใน header ทั้งแถว
+              'w-9 rounded-[5px] py-1 text-center text-xs font-medium transition-colors',
               isActive
                 ? 'bg-foreground text-background'
                 : 'text-muted-foreground hover:text-foreground',

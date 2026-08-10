@@ -40,7 +40,7 @@ export function Section({
         {hasHeader && (
           <div
             className={cn(
-              'mb-12 flex flex-col gap-6 md:mb-16',
+              'reveal mb-12 flex flex-col gap-6 md:mb-16',
               align === 'left' ? 'md:flex-row md:items-end md:justify-between' : 'items-center text-center',
             )}
           >

@@ -1,11 +1,5 @@
 import type { Metadata } from 'next'
-import {
-  IBM_Plex_Sans_Thai,
-  Inter,
-  Instrument_Serif,
-  JetBrains_Mono,
-  Noto_Serif_Thai,
-} from 'next/font/google'
+import { IBM_Plex_Sans_Thai, Inter, Instrument_Serif, JetBrains_Mono } from 'next/font/google'
 import { hasLocale, NextIntlClientProvider } from 'next-intl'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { notFound } from 'next/navigation'
@@ -21,11 +15,22 @@ import { getSiteSettings } from '@/lib/settings'
 import { organizationSchema, websiteSchema } from '@/lib/structured-data'
 import '../globals.css'
 
-// ละติน — หัวข้อใหญ่เป็น serif ให้ความรู้สึกงาน editorial, เนื้อหาเป็น sans อ่านง่าย
+/**
+ * ฟอนต์แยกตามภาษา ไม่ใช่ปล่อยให้ fallback หากลิฟเอง
+ *
+ * การวาง stack เป็น "ละตินก่อน แล้วค่อยตกไปไทย" ดูเหมือนจะได้ผล
+ * แต่ตัวเลขและเครื่องหมายวรรคตอนมีอยู่ในฟอนต์ละตินด้วย มันจึงไม่เคยตกไปฟอนต์ไทย
+ * ทำให้ "15,000 บาท" มีตัวเลขคนละฟอนต์กับตัวอักษร — คนละ x-height คนละน้ำหนัก
+ *
+ * ทางแก้คือสลับลำดับ stack ตาม :lang() ใน globals.css
+ * หน้าไทยจึงใช้ฟอนต์ไทยล้วนทั้งตัวอักษร ตัวเลข และวรรคตอน
+ */
+
+// ละติน — หัวข้อเป็น serif ให้ความรู้สึกงาน editorial เนื้อหาเป็น sans อ่านง่าย
+// ไม่ประกาศ italic เพราะทั้งเว็บไม่มีที่ไหนใช้ — ประกาศไว้เฉย ๆ คือดึงไฟล์ทิ้งฟรีทุกหน้า
 const instrumentSerif = Instrument_Serif({
   subsets: ['latin'],
   weight: '400',
-  style: ['normal', 'italic'],
   variable: '--font-display',
   display: 'swap',
 })
@@ -36,32 +41,35 @@ const inter = Inter({
   display: 'swap',
 })
 
-// ไทย — เบราว์เซอร์จะข้ามมาใช้ชุดนี้เองเมื่อเจอกลิฟที่ฟอนต์ละตินไม่มี
-const notoSerifThai = Noto_Serif_Thai({
-  subsets: ['thai'],
-  weight: ['400', '500', '600', '700'],
-  variable: '--font-display-th',
-  display: 'swap',
-})
-
-const plexSansThai = IBM_Plex_Sans_Thai({
+/**
+ * ไทย — ตระกูลเดียวใช้ทั้งหัวข้อและเนื้อหา กลิฟละตินของมันคือ IBM Plex Sans
+ * ภาษาอังกฤษที่แทรกในประโยคไทยจึงกลมกลืน ไม่กระโดดเป็นอีกฟอนต์
+ *
+ * ต้องมี subset latin ด้วย ไม่ใช่แค่ thai เพราะตัวเลข 0-9 อยู่ในช่วง latin
+ * ถ้าตัดออกตัวเลขจะตกไปฟอนต์อื่นแล้วกลับไปเป็นปัญหาเดิม
+ *
+ * เคยลองแยกประกาศเป็นสองชุดเพื่อ preload เฉพาะน้ำหนักหัวข้อ แต่ไม่ได้ผล
+ * next/font รวมประกาศที่เป็นตระกูลและ subset เดียวกันเข้าด้วยกัน แล้วให้ preload ชนะ
+ */
+const plexThai = IBM_Plex_Sans_Thai({
   subsets: ['thai', 'latin'],
-  weight: ['300', '400', '500', '600', '700'],
-  variable: '--font-sans-th',
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-thai',
   display: 'swap',
 })
 
+// ใช้เฉพาะป้ายเล็ก ๆ ไม่กี่จุด ไม่คุ้มที่จะดึงล่วงหน้า
 const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
   variable: '--font-mono',
   display: 'swap',
+  preload: false,
 })
 
 const fontVariables = [
   instrumentSerif.variable,
   inter.variable,
-  notoSerifThai.variable,
-  plexSansThai.variable,
+  plexThai.variable,
   jetbrainsMono.variable,
 ].join(' ')
 

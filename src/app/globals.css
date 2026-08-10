@@ -78,6 +78,32 @@
 }
 
 @layer base {
+  /**
+   * ลำดับฟอนต์สลับตามภาษาของเนื้อหา ไม่ใช่ปล่อยให้เบราว์เซอร์ fallback หากลิฟเอง
+   *
+   * ถ้าวางละตินไว้หน้าเสมอ ตัวเลขและวรรคตอนจะมาจากฟอนต์ละตินตลอด
+   * เพราะมันมีกลิฟพวกนั้นครบ ไม่มีเหตุให้ตกไปฟอนต์ไทย
+   * ผลคือ "15,000 บาท" ตัวเลขกับตัวอักษรคนละฟอนต์ ดูไม่เข้ากัน
+   *
+   * :lang() ทำงานตามค่า lang ที่ใกล้ที่สุด รีวิวภาษาไทยที่อยู่ในหน้าอังกฤษ
+   * จึงได้ฟอนต์ไทยถูกต้องโดยอัตโนมัติ เพราะการ์ดรีวิวใส่ lang ของตัวเองไว้
+   */
+  :root {
+    --stack-sans: var(--font-sans), var(--font-thai), system-ui, sans-serif;
+    --stack-display: var(--font-display), var(--font-thai), Georgia, serif;
+    /* Instrument Serif มีน้ำหนักเดียวและตัวค่อนข้างบาง จึงไม่ต้องเพิ่มน้ำหนัก */
+    --display-weight: 400;
+    --display-tracking: -0.02em;
+  }
+
+  :lang(th) {
+    --stack-sans: var(--font-thai), system-ui, sans-serif;
+    --stack-display: var(--font-thai), system-ui, sans-serif;
+    /* หัวข้อไทยเป็น sans จึงต้องหนักขึ้นเพื่อให้มีน้ำหนักสายตาเท่า serif ของอังกฤษ */
+    --display-weight: 600;
+    --display-tracking: -0.01em;
+  }
+
   * {
     @apply border-border;
   }
@@ -133,7 +159,27 @@
   :lang(th) h1,
   :lang(th) h2,
   :lang(th) h3 {
-    line-height: 1.45;
+    line-height: 1.5;
+  }
+}
+
+@layer components {
+  /**
+   * น้ำหนักและระยะห่างของหัวข้อปรับตามภาษา
+   *
+   * อยู่ใน components ไม่ใช่ base เพื่อให้ utility อย่าง font-bold ที่เขียนทับในบางที่
+   * ยังชนะได้ตามลำดับ layer ของ Tailwind (base < components < utilities)
+   */
+  .font-display {
+    font-weight: var(--display-weight);
+    letter-spacing: var(--display-tracking);
+  }
+
+  /* โลโก้ต้องเป็นฟอนต์เดียวกันทุกภาษา ไม่งั้นแบรนด์เปลี่ยนหน้าตาตอนสลับภาษา */
+  .wordmark {
+    font-family: var(--font-display), Georgia, serif;
+    font-weight: 400;
+    letter-spacing: 0.01em;
   }
 }
 
@@ -159,6 +205,43 @@
 
   .fade-edges-x {
     mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
+  }
+
+  /**
+   * เนื้อหาค่อย ๆ ปรากฏตอนเลื่อนถึง — ทำด้วย CSS scroll-driven ล้วน ไม่มี JavaScript
+   *
+   * ต่างจากวิธีเดิมที่ต้องใช้ IntersectionObserver แล้วสั่ง setState ทุกครั้งที่เลื่อน
+   * ตัวนี้รันบน compositor ไม่แตะ main thread จึงไม่กิน CPU และไม่ทำให้เลื่อนหนืด
+   *
+   * เบราว์เซอร์ที่ยังไม่รองรับจะข้ามทั้งบล็อกแล้วแสดงเนื้อหาตามปกติ
+   * ไม่ใช่ค้างโปร่งใสถาวรแบบที่มักเจอเวลาเขียนเอฟเฟกต์นี้ด้วย JS
+   */
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .reveal {
+        animation: reveal-in linear both;
+        animation-timeline: view();
+        animation-range: entry 8% cover 30%;
+      }
+
+      /* ไล่จังหวะทีละใบในกริด ให้ดูมีชีวิตกว่าโผล่พร้อมกันทั้งแถว */
+      .reveal-stagger > * {
+        animation: reveal-in linear both;
+        animation-timeline: view();
+        animation-range: entry 5% cover 28%;
+      }
+    }
+  }
+}
+
+@keyframes reveal-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
   }
 }
 
