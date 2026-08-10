@@ -13,7 +13,9 @@ import { Section } from '@/components/ui/Section'
 import { MediaGallery, type GalleryItem } from '@/components/work/MediaGallery'
 import { ProjectCard } from '@/components/work/ProjectCard'
 import { VideoEmbed } from '@/components/work/VideoEmbed'
+import { JsonLd } from '@/components/JsonLd'
 import { parseVideoUrl, videoThumbnailUrl } from '@/lib/format'
+import { breadcrumbSchema, creativeWorkSchema } from '@/lib/structured-data'
 import { getProjectBySlug, getProjectSlugs, getRelatedProjects } from '@/server/queries'
 
 type Credit = { role: string; name: string }
@@ -97,6 +99,25 @@ export default async function ProjectDetailPage({
 
   return (
     <>
+      <JsonLd
+        data={creativeWorkSchema({
+          title,
+          description: summary,
+          slug,
+          locale,
+          image: project.coverImage,
+          year: project.year,
+          clientName: project.clientName,
+        })}
+      />
+      <JsonLd
+        data={breadcrumbSchema([
+          { name: tNav('home'), path: `/${locale}` },
+          { name: tNav('work'), path: `/${locale}/work` },
+          { name: title, path: `/${locale}/work/${slug}` },
+        ])}
+      />
+
       <section className="border-b border-border py-14 md:py-20">
         <div className="container">
           <Breadcrumbs

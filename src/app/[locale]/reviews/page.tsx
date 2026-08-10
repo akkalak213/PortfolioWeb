@@ -6,7 +6,9 @@ import { ReviewCard } from '@/components/reviews/ReviewCard'
 import { ReviewForm } from '@/components/reviews/ReviewForm'
 import { RatingStars } from '@/components/ui/RatingStars'
 import { Section } from '@/components/ui/Section'
+import { JsonLd } from '@/components/JsonLd'
 import { formatNumber } from '@/lib/format'
+import { aggregateRatingSchema } from '@/lib/structured-data'
 import { getApprovedReviews, getReviewStats } from '@/server/queries'
 
 export async function generateMetadata({
@@ -36,6 +38,9 @@ export default async function ReviewsPage({ params }: { params: Promise<{ locale
 
   return (
     <>
+      {/* ทำให้ผลค้นหา Google แสดงดาวใต้ชื่อเว็บ */}
+      <JsonLd data={aggregateRatingSchema(stats.average, stats.total)} />
+
       <Section eyebrow={t('eyebrow')} title={t('title')} subtitle={t('subtitle')}>
         {stats.total > 0 && (
           <div className="mb-14 grid gap-6 md:grid-cols-3">

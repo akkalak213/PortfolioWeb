@@ -1,10 +1,11 @@
 'use client'
 
+import { RotateCw } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useEffect } from 'react'
 import { Button } from '@/components/ui/Button'
 
-export default function ErrorBoundary({
+export default function LocaleError({
   error,
   reset,
 }: {
@@ -14,24 +15,23 @@ export default function ErrorBoundary({
   const t = useTranslations('error')
 
   useEffect(() => {
-    // digest คือรหัสที่ Next ใส่ให้ error ฝั่งเซิร์ฟเวอร์ ใช้ไล่หา log ที่ตรงกันใน Railway ได้
-    console.error('[error-boundary]', error.digest ?? error.message)
+    // digest คือรหัสที่ Next ใส่ไว้ใน log ฝั่งเซิร์ฟเวอร์ ใช้ตามหา stack trace ตัวจริงได้
+    console.error('[page error]', error.digest ?? error.message)
   }, [error])
 
   return (
-    <section className="flex min-h-[60dvh] items-center py-20">
-      <div className="container text-center">
-        <h1 className="font-display text-display-sm text-balance">{t('title')}</h1>
-        <p className="mx-auto mt-4 max-w-md text-muted-foreground text-pretty">{t('description')}</p>
+    <div className="container flex min-h-[60dvh] flex-col items-center justify-center py-20 text-center">
+      <h1 className="font-display text-display-md text-balance">{t('title')}</h1>
+      <p className="mt-4 max-w-md text-muted-foreground text-pretty">{t('description')}</p>
 
-        <Button size="lg" className="mt-9" onClick={reset}>
-          {t('retry')}
-        </Button>
+      {error.digest && (
+        <p className="mt-3 font-mono text-xs text-muted-foreground">#{error.digest}</p>
+      )}
 
-        {error.digest && (
-          <p className="mt-6 font-mono text-xs text-muted-foreground">ref: {error.digest}</p>
-        )}
-      </div>
-    </section>
+      <Button onClick={reset} size="lg" className="mt-8">
+        <RotateCw size={16} strokeWidth={1.75} aria-hidden />
+        {t('retry')}
+      </Button>
+    </div>
   )
 }

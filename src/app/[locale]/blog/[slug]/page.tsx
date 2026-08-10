@@ -6,7 +6,9 @@ import type { Locale } from '@/i18n/routing'
 import { Badge } from '@/components/ui/Badge'
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
 import { Prose } from '@/components/ui/Prose'
+import { JsonLd } from '@/components/JsonLd'
 import { formatDate } from '@/lib/format'
+import { articleSchema, breadcrumbSchema } from '@/lib/structured-data'
 import { getPostBySlug, getPostSlugs } from '@/server/queries'
 
 export async function generateStaticParams() {
@@ -63,6 +65,26 @@ export default async function PostDetailPage({
 
   return (
     <article className="py-14 md:py-20">
+      <JsonLd
+        data={articleSchema({
+          title,
+          description: excerpt,
+          slug,
+          locale,
+          image: post.coverImage,
+          publishedAt: post.publishedAt,
+          updatedAt: post.updatedAt,
+          authorName: post.author?.name ?? null,
+        })}
+      />
+      <JsonLd
+        data={breadcrumbSchema([
+          { name: tNav('home'), path: `/${locale}` },
+          { name: tNav('blog'), path: `/${locale}/blog` },
+          { name: title, path: `/${locale}/blog/${slug}` },
+        ])}
+      />
+
       <div className="container">
         <Breadcrumbs
           items={[

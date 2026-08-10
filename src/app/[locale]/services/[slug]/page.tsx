@@ -10,7 +10,9 @@ import { LeadForm } from '@/components/forms/LeadForm'
 import { ProjectCard } from '@/components/work/ProjectCard'
 import { Section } from '@/components/ui/Section'
 import { ServiceIcon } from '@/components/ui/ServiceIcon'
-import { formatPrice } from '@/lib/format'
+import { JsonLd } from '@/components/JsonLd'
+import { formatPrice, toNumber } from '@/lib/format'
+import { breadcrumbSchema, faqSchema, serviceSchema } from '@/lib/structured-data'
 import { cn } from '@/lib/utils'
 import { getProjects, getServiceBySlug, getServiceSlugs } from '@/server/queries'
 
@@ -99,8 +101,25 @@ export default async function ServiceDetailPage({
     CUSTOM: '',
   } as const
 
+  // ราคาต่ำสุดในบรรดาแพ็กเกจ ใช้บอก Google ว่าบริการนี้เริ่มต้นที่เท่าไหร่
+  const lowPrice = service.packages.reduce<number | null>((lowest, pkg) => {
+    const price = toNumber(pkg.priceFrom)
+    if (price === null) return lowest
+    return lowest === null || price < lowest ? price : lowest
+  }, null)
+
   return (
     <>
+      <JsonLd data={serviceSchema({ name: title, description, slug, locale, lowPrice })} />
+      <JsonLd
+        data={breadcrumbSchema([
+          { name: tNav('home'), path: `/${locale}` },
+          { name: tNav('services'), path: `/${locale}/services` },
+          { name: title, path: `/${locale}/services/${slug}` },
+        ])}
+      />
+      <JsonLd data={faqSchema(faq)} />
+
       <section className="border-b border-border py-14 md:py-20">
         <div className="container">
           <Breadcrumbs

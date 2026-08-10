@@ -5,7 +5,9 @@ import { authConfig } from './auth.config'
 import { routing } from './i18n/routing'
 
 /**
- * middleware ตัวเดียวรับสองหน้าที่:
+ * proxy (เดิมชื่อ middleware — Next 16 เปลี่ยนชื่อไฟล์ตามอนุสัญญาใหม่)
+ *
+ * ตัวเดียวรับสองหน้าที่:
  *   /admin/*  → ตรวจว่าล็อกอินแล้วหรือยัง (หลังบ้านใช้ภาษาไทยอย่างเดียว ไม่มี prefix ภาษา)
  *   ที่เหลือ  → ให้ next-intl จัดการเปลี่ยนเส้นทางไป /th หรือ /en
  */
