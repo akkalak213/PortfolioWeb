@@ -16,7 +16,7 @@ import { VideoEmbed } from '@/components/work/VideoEmbed'
 import { JsonLd } from '@/components/JsonLd'
 import { parseVideoUrl, videoThumbnailUrl } from '@/lib/format'
 import { breadcrumbSchema, creativeWorkSchema } from '@/lib/structured-data'
-import { getProjectBySlug, getProjectSlugs, getRelatedProjects } from '@/server/queries'
+import { getProjectBySlug, getRelatedProjects } from '@/server/queries'
 
 /**
  * สร้างหน้าใหม่อัตโนมัติทุก 10 นาที
@@ -40,10 +40,10 @@ function asCredits(value: unknown): Credit[] {
   )
 }
 
-export async function generateStaticParams() {
-  const slugs = await getProjectSlugs()
-  return slugs.map(({ slug }) => ({ slug }))
-}
+/**
+ * ไม่ประกาศ generateStaticParams — เหตุผลเดียวกับหน้าบริการ
+ * ตอน build บน Railway ไม่มีฐานข้อมูล ฟังก์ชันจะคืนค่าว่างแล้วทำให้หน้าตอบ 500
+ */
 
 export async function generateMetadata({
   params,

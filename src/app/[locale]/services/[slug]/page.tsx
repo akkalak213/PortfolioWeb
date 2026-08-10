@@ -14,7 +14,7 @@ import { JsonLd } from '@/components/JsonLd'
 import { formatPrice, toNumber } from '@/lib/format'
 import { breadcrumbSchema, faqSchema, serviceSchema } from '@/lib/structured-data'
 import { cn } from '@/lib/utils'
-import { getProjects, getServiceBySlug, getServiceSlugs } from '@/server/queries'
+import { getProjects, getServiceBySlug } from '@/server/queries'
 
 /**
  * สร้างหน้าใหม่อัตโนมัติทุก 10 นาที
@@ -47,10 +47,17 @@ function asFaq(value: unknown): FaqItem[] {
   )
 }
 
-export async function generateStaticParams() {
-  const slugs = await getServiceSlugs()
-  return slugs.map(({ slug }) => ({ slug }))
-}
+/**
+ * ไม่ประกาศ generateStaticParams ไว้ที่นี่โดยตั้งใจ
+ *
+ * ตอน build บน Railway ยังต่อฐานข้อมูลไม่ได้ ฟังก์ชันนี้จึงคืนอาเรย์ว่างเสมอ
+ * Next เลยประกาศ route เป็น SSG ที่ไม่มี path สักอัน แล้วเสิร์ฟ on-demand ไม่ได้
+ * ผลคือหน้ารายละเอียดทุกหน้าตอบ 500 บน production ทั้งที่บนเครื่องปกติดี
+ * (เครื่องเราต่อฐานข้อมูลตอน build ได้ หน้าจึงถูก prerender ไว้ล่วงหน้า จึงไม่เจอปัญหา)
+ *
+ * ปล่อยให้เป็น dynamic แล้วแคชด้วย revalidate ข้างบนแทน
+ * ผู้เข้าคนแรกจ่ายค่าเรนเดอร์ คนถัดไปได้ของจากแคช
+ */
 
 export async function generateMetadata({
   params,

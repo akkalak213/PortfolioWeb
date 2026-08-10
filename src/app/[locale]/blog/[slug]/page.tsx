@@ -9,7 +9,7 @@ import { Prose } from '@/components/ui/Prose'
 import { JsonLd } from '@/components/JsonLd'
 import { formatDate } from '@/lib/format'
 import { articleSchema, breadcrumbSchema } from '@/lib/structured-data'
-import { getPostBySlug, getPostSlugs } from '@/server/queries'
+import { getPostBySlug } from '@/server/queries'
 
 /**
  * สร้างหน้าใหม่อัตโนมัติทุก 10 นาที
@@ -23,10 +23,10 @@ import { getPostBySlug, getPostSlugs } from '@/server/queries'
 export const revalidate = 600
 
 
-export async function generateStaticParams() {
-  const slugs = await getPostSlugs()
-  return slugs.map(({ slug }) => ({ slug }))
-}
+/**
+ * ไม่ประกาศ generateStaticParams — เหตุผลเดียวกับหน้าบริการ
+ * ตอน build บน Railway ไม่มีฐานข้อมูล ฟังก์ชันจะคืนค่าว่างแล้วทำให้หน้าตอบ 500
+ */
 
 export async function generateMetadata({
   params,

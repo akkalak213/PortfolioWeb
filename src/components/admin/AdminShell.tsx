@@ -80,7 +80,7 @@ export function AdminShell({ children, user, counts }: Props) {
     <div className="flex h-full flex-col">
       <div className="flex h-16 items-center justify-between border-b border-border px-5">
         <Link href="/admin" onClick={() => setIsOpen(false)}>
-          <Wordmark compact />
+          <Wordmark />
         </Link>
         <button
           type="button"

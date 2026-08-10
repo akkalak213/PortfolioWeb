@@ -1,21 +1,25 @@
 import { cn } from '@/lib/utils'
 
 /**
- * โลโก้ชั่วคราวแบบตัวอักษรล้วน — ยังไม่มีไฟล์โลโก้จริงจากลูกค้า
- * เปลี่ยนเป็น SVG จริงได้ที่ไฟล์นี้ที่เดียว ทุกที่ในเว็บจะตามทันที
+ * ชื่อแบรนด์ — ล็อกให้เหมือนกันทุกที่ ทุกภาษา ทุกขนาดจอ
+ *
+ * ของเดิมซ่อนคำว่า "Production" บนจอเล็ก และมี prop compact ที่ซ่อนมันในบางหน้า
+ * ทำให้ชื่อแบรนด์เปลี่ยนไปมาแล้วแต่ว่าอยู่ตรงไหน ซึ่งเป็นสิ่งที่แบรนด์ไม่ควรทำ
+ *
+ * ฟอนต์ถูกล็อกเป็น Instrument Serif ผ่านคลาส .wordmark ใน globals.css
+ * ไม่ตามภาษาของหน้า ชื่อแบรนด์จึงหน้าตาเดิมทั้งหน้าไทยและหน้าอังกฤษ
  */
-export function Wordmark({ className, compact = false }: { className?: string; compact?: boolean }) {
+export function Wordmark({ className }: { className?: string }) {
   return (
-    <span className={cn('inline-flex items-baseline gap-2 select-none', className)}>
-      <span className="wordmark text-xl leading-none md:text-[1.6rem]">
-        Alexan
-        <span className="text-accent">.</span>
+    <span
+      // ป้องกันไม่ให้ชื่อแบรนด์ถูกตัดขึ้นบรรทัดใหม่กลางคำ
+      className={cn('wordmark inline-flex select-none items-baseline whitespace-nowrap', className)}
+    >
+      <span className="text-[1.15rem] leading-none md:text-[1.35rem]">Alexan</span>
+      <span aria-hidden className="mx-[0.12em] text-accent">
+        .
       </span>
-      {!compact && (
-        <span className="hidden text-[0.6rem] font-medium uppercase tracking-[0.28em] text-muted-foreground sm:inline">
-          Production
-        </span>
-      )}
+      <span className="text-[1.15rem] leading-none md:text-[1.35rem]">Production</span>
     </span>
   )
 }
