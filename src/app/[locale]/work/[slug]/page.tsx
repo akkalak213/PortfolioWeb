@@ -18,6 +18,18 @@ import { parseVideoUrl, videoThumbnailUrl } from '@/lib/format'
 import { breadcrumbSchema, creativeWorkSchema } from '@/lib/structured-data'
 import { getProjectBySlug, getProjectSlugs, getRelatedProjects } from '@/server/queries'
 
+/**
+ * สร้างหน้าใหม่อัตโนมัติทุก 10 นาที
+ *
+ * ตอน build บน Railway ยังต่อฐานข้อมูลไม่ได้ (private network เปิดหลัง deploy)
+ * หน้าจึงถูก prerender ด้วยข้อมูลเปล่า ISR ทำให้มันรีเฟรชตัวเองหลังขึ้นระบบ
+ * โดยไม่ต้องผูก build เข้ากับฐานข้อมูล
+ *
+ * การแก้เนื้อหาจากหน้า /admin ยังสั่ง revalidate ทันทีอยู่แล้ว ไม่ต้องรอรอบนี้
+ */
+export const revalidate = 600
+
+
 type Credit = { role: string; name: string }
 
 function asCredits(value: unknown): Credit[] {
