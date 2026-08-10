@@ -1,7 +1,23 @@
 import type { NextConfig } from 'next'
 import createNextIntlPlugin from 'next-intl/plugin'
 
-const r2Host = process.env.R2_PUBLIC_URL ? new URL(process.env.R2_PUBLIC_URL).hostname : null
+/**
+ * ดึงเฉพาะชื่อโฮสต์จาก R2_PUBLIC_URL
+ * รับได้ทั้งแบบมีและไม่มี https:// นำหน้า และไม่ทำให้ build ล้มถ้าค่าผิดรูป
+ */
+function hostnameOf(value: string | undefined): string | null {
+  if (!value?.trim()) return null
+  const withProtocol = /^https?:\/\//i.test(value.trim()) ? value.trim() : `https://${value.trim()}`
+
+  try {
+    return new URL(withProtocol).hostname
+  } catch {
+    console.warn(`[next.config] R2_PUBLIC_URL ไม่ถูกรูปแบบ จึงข้ามไป: ${value}`)
+    return null
+  }
+}
+
+const r2Host = hostnameOf(process.env.R2_PUBLIC_URL)
 
 const nextConfig: NextConfig = {
   // Railway รันเป็น container — standalone ตัดขนาด image ลงเหลือเฉพาะไฟล์ที่ใช้จริง

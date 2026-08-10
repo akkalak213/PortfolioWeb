@@ -31,6 +31,20 @@ const clientSchema = z.object({
 
 const skip = process.env.SKIP_ENV_VALIDATION === '1'
 
+/**
+ * เติม https:// ให้ค่าที่กรอกมาเป็นแค่ชื่อโดเมน
+ *
+ * เป็นความผิดพลาดที่เกิดง่ายมากตอนก๊อปโดเมนจาก dashboard ของ Railway
+ * และถ้าไม่ดักไว้ build จะล้มทั้งรอบด้วย "TypeError: Invalid URL"
+ * ซึ่งอ่านแล้วเดาไม่ออกว่าต้นเหตุอยู่ที่ค่าตัวไหน
+ */
+function normalizeUrl(value: string | undefined): string | undefined {
+  if (!value) return value
+  const trimmed = value.trim().replace(/\/+$/, '')
+  if (!trimmed) return undefined
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`
+}
+
 function parse<T extends z.ZodType>(schema: T, source: unknown, label: string): z.infer<T> {
   if (skip) return source as z.infer<T>
 
@@ -44,13 +58,17 @@ function parse<T extends z.ZodType>(schema: T, source: unknown, label: string): 
   return result.data
 }
 
-export const serverEnv = parse(serverSchema, process.env, 'environment variable ฝั่งเซิร์ฟเวอร์')
+export const serverEnv = parse(
+  serverSchema,
+  { ...process.env, R2_PUBLIC_URL: normalizeUrl(process.env.R2_PUBLIC_URL) },
+  'environment variable ฝั่งเซิร์ฟเวอร์',
+)
 
 // Next.js แทนค่า NEXT_PUBLIC_* ตอน build จึงต้องอ้างถึงแบบเต็มชื่อ ไม่ใช่ spread จาก process.env
 export const clientEnv = parse(
   clientSchema,
   {
-    NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
+    NEXT_PUBLIC_SITE_URL: normalizeUrl(process.env.NEXT_PUBLIC_SITE_URL),
     NEXT_PUBLIC_GA_ID: process.env.NEXT_PUBLIC_GA_ID,
   },
   'environment variable ฝั่งเบราว์เซอร์',
