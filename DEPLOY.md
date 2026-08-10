@@ -24,6 +24,9 @@
 | `AUTH_URL` | โดเมนจริง เช่น `https://alexanproduction.com` |
 | `NEXT_PUBLIC_SITE_URL` | โดเมนเดียวกับ `AUTH_URL` |
 
+> ไม่ต้องตั้ง `AUTH_TRUST_HOST` — เปิดไว้ในโค้ดแล้วที่ `src/auth.config.ts`
+> เพราะ Railway มี reverse proxy อยู่หน้า container ถ้าไม่เปิดจะล็อกอินไม่ได้เลย
+
 > **ต้องใช้ `${{Postgres.DATABASE_URL}}` ไม่ใช่ค่า public ที่ลงท้าย `proxy.rlwy.net`**
 > ค่า internal วิ่งในเครือข่ายของ Railway เอง เร็วกว่าและไม่เสียค่า egress
 > ส่วนค่า public มีไว้ต่อจากเครื่องตัวเองเท่านั้น
@@ -38,15 +41,22 @@
 
 ### ค่าที่ต้องใส่ตอน build ด้วย
 
-`NEXT_PUBLIC_*` ถูกฝังเข้า bundle ตั้งแต่ตอน build ไม่ใช่อ่านตอนรัน
-ใน Railway ให้เพิ่มเป็น **Build argument** ด้วย (Settings → Build → Build Arguments):
+ค่าสามตัวนี้ถูกอ่านตั้งแต่ตอน build ไม่ใช่ตอนรัน
+ใน Railway ต้องเพิ่มเป็น **Build argument** ด้วย (Settings → Build → Build Arguments):
 
 ```
 NEXT_PUBLIC_SITE_URL=https://alexanproduction.com
 NEXT_PUBLIC_GA_ID=
+R2_PUBLIC_URL=https://pub-xxxxxxxx.r2.dev
 ```
 
-ถ้าลืมข้อนี้ ลิงก์ในเว็บจะชี้กลับไปที่ `http://localhost:3000`
+| ลืมตัวไหน | อาการที่เจอ |
+|---|---|
+| `NEXT_PUBLIC_SITE_URL` | ลิงก์ sitemap และ OG image ชี้กลับไป `http://localhost:3000` |
+| `R2_PUBLIC_URL` | รูปที่อัปโหลดขึ้นไม่แสดงบนหน้าเว็บ เพราะ `next/image` ปฏิเสธโดเมนที่ไม่อยู่ใน allowlist |
+
+`R2_PUBLIC_URL` ต้องใส่**ทั้งสองที่** — เป็น build argument (สำหรับ allowlist ของรูป)
+และเป็น runtime variable (สำหรับตอนอัปโหลด)
 
 ---
 

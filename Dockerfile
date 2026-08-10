@@ -33,6 +33,11 @@ ARG NEXT_PUBLIC_GA_ID
 ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
 ENV NEXT_PUBLIC_GA_ID=$NEXT_PUBLIC_GA_ID
 
+# next.config อ่านค่านี้ตอน build เพื่อใส่โดเมน R2 ลงใน images.remotePatterns
+# ตั้งเป็น runtime variable อย่างเดียวไม่พอ — รูปที่อัปโหลดจะโดน next/image ปฏิเสธ
+ARG R2_PUBLIC_URL
+ENV R2_PUBLIC_URL=$R2_PUBLIC_URL
+
 # ตอน build ยังไม่มี DATABASE_URL และ AUTH_SECRET จริง — ข้ามการ validate env ไปก่อน
 # ค่าจริงจะถูกอ่านตอน runtime จาก Variables ของ Railway
 ENV SKIP_ENV_VALIDATION=1
@@ -62,6 +67,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.ts ./prisma.config.
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/prisma ./node_modules/prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
+# prisma.config.ts เปิดไฟล์ด้วย import 'dotenv/config' — ขาดไปแล้ว migrate deploy จะพังตั้งแต่โหลด config
+# (บน Railway ค่าจริงมาจาก environment variable อยู่แล้ว dotenv แค่ทำให้ไฟล์ config โหลดผ่าน)
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/dotenv ./node_modules/dotenv
 
 USER nextjs
 

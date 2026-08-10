@@ -7,6 +7,12 @@ import type { NextAuthConfig } from 'next-auth'
  * ตัว provider ที่ต้องแตะฐานข้อมูลอยู่ใน auth.ts ซึ่งรันบน Node เท่านั้น
  */
 export const authConfig = {
+  /**
+   * Railway ยืน reverse proxy อยู่หน้า container ทำให้ host ที่แอปเห็นไม่ตรงกับโดเมนจริง
+   * ถ้าไม่เปิด trustHost เอาไว้ Auth.js จะปฏิเสธทุกคำขอด้วย UntrustedHost แล้วล็อกอินไม่ได้เลย
+   * (บน Vercel ไม่ต้องตั้ง เพราะตรวจจับให้อัตโนมัติ — แต่ที่อื่นต้องบอกเอง)
+   */
+  trustHost: true,
   pages: {
     signIn: '/admin/login',
     error: '/admin/login',
