@@ -1,4 +1,5 @@
 import { cache } from 'react'
+import type { LeadStatus, ReviewStatus } from '@/generated/prisma/enums'
 import { db } from '@/lib/db'
 
 /**
@@ -86,5 +87,77 @@ export const getDashboardData = cache(async () => {
     quotes: { draft: quotesDraft, sent: quotesSent },
     recentLeads,
     recentReviews,
+  }
+})
+
+// ──────────────────── คำขอจากลูกค้า ────────────────────
+
+export const getLeads = cache(async (status?: LeadStatus) => {
+  const [leads, counts] = await Promise.all([
+    db.lead.findMany({
+      where: status ? { status } : undefined,
+      orderBy: [{ status: 'asc' }, { createdAt: 'desc' }],
+      take: 200,
+      select: {
+        id: true,
+        refCode: true,
+        name: true,
+        email: true,
+        phone: true,
+        company: true,
+        source: true,
+        status: true,
+        services: true,
+        budgetRange: true,
+        createdAt: true,
+        _count: { select: { items: true, notes: true, quotes: true } },
+      },
+    }),
+    db.lead.groupBy({ by: ['status'], _count: { _all: true } }),
+  ])
+
+  return {
+    leads,
+    counts: Object.fromEntries(counts.map((c) => [c.status, c._count._all])) as Partial<
+      Record<LeadStatus, number>
+    >,
+    total: counts.reduce((sum, c) => sum + c._count._all, 0),
+  }
+})
+
+export const getLeadById = cache((id: string) =>
+  db.lead.findUnique({
+    where: { id },
+    include: {
+      items: { include: { equipment: { select: { slug: true, brand: true, model: true } } } },
+      notes: {
+        orderBy: { createdAt: 'desc' },
+        include: { author: { select: { name: true } } },
+      },
+      quotes: {
+        orderBy: { createdAt: 'desc' },
+        select: { id: true, quoteNumber: true, status: true, total: true, issueDate: true },
+      },
+    },
+  }),
+)
+
+// ──────────────────── รีวิวที่ต้องตรวจ ────────────────────
+
+export const getReviewsForModeration = cache(async (status: ReviewStatus = 'PENDING') => {
+  const [reviews, counts] = await Promise.all([
+    db.review.findMany({
+      where: { status },
+      orderBy: [{ createdAt: 'desc' }],
+      take: 200,
+    }),
+    db.review.groupBy({ by: ['status'], _count: { _all: true } }),
+  ])
+
+  return {
+    reviews,
+    counts: Object.fromEntries(counts.map((c) => [c.status, c._count._all])) as Partial<
+      Record<ReviewStatus, number>
+    >,
   }
 })
