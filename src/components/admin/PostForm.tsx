@@ -5,6 +5,7 @@ import { useActionState } from 'react'
 import { ContentStatus } from '@/generated/prisma/enums'
 import { AdminCard } from '@/components/admin/AdminPage'
 import { BilingualTabs, RepeatableInput, SubmitButton } from '@/components/admin/AdminUI'
+import { ImageField } from '@/components/admin/ImageField'
 import { buttonClasses } from '@/components/ui/Button'
 import { Field, FormMessage, Input, Select, Textarea } from '@/components/ui/Form'
 import { contentStatusLabels } from '@/lib/admin-labels'
@@ -64,11 +65,15 @@ export function PostForm({ post }: { post: PostFormData }) {
             <Field htmlFor="slug" label="slug" hint="เว้นว่างได้ ระบบสร้างจากชื่อบทความ">
               <Input id="slug" name="slug" defaultValue={post.slug} />
             </Field>
-            <Field htmlFor="coverImage" label="รูปปก (URL)" className="sm:col-span-2">
-              <Input id="coverImage" name="coverImage" defaultValue={post.coverImage} />
-            </Field>
           </div>
-          <div className="mt-5">
+          <div className="mt-5 space-y-5">
+            <ImageField
+              name="coverImage"
+              label="รูปปก"
+              initial={post.coverImage}
+              folder="blog"
+              hint="แสดงบนการ์ดบทความและตอนแชร์ลงโซเชียล"
+            />
             <RepeatableInput name="tags" label="แท็ก" initial={post.tags} addLabel="เพิ่มแท็ก" />
           </div>
         </AdminCard>

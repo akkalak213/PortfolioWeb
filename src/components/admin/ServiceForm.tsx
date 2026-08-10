@@ -3,6 +3,7 @@
 import { useActionState } from 'react'
 import { AdminCard } from '@/components/admin/AdminPage'
 import { BilingualTabs, PairInput, RepeatableInput, SubmitButton } from '@/components/admin/AdminUI'
+import { ImageField } from '@/components/admin/ImageField'
 import { Field, FormMessage, Input, Select, Textarea } from '@/components/ui/Form'
 import { iconMap } from '@/lib/icons'
 import { initialAdminState } from '@/server/admin-state'
@@ -62,9 +63,12 @@ export function ServiceForm({ service }: { service: ServiceFormData }) {
           </label>
         </div>
         <div className="mt-5">
-          <Field htmlFor="coverImage" label="รูปประกอบ (URL)">
-            <Input id="coverImage" name="coverImage" defaultValue={service.coverImage} />
-          </Field>
+          <ImageField
+            name="coverImage"
+            label="รูปประกอบ"
+            initial={service.coverImage}
+            folder="services"
+          />
         </div>
       </AdminCard>
 

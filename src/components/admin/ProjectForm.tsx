@@ -5,6 +5,7 @@ import { useActionState } from 'react'
 import { ContentStatus, ServiceCategory } from '@/generated/prisma/enums'
 import { BilingualTabs, PairInput, RepeatableInput, SubmitButton } from '@/components/admin/AdminUI'
 import { AdminCard } from '@/components/admin/AdminPage'
+import { ImageField, ImageListField } from '@/components/admin/ImageField'
 import { buttonClasses } from '@/components/ui/Button'
 import { Field, FormMessage, Input, Select, Textarea } from '@/components/ui/Form'
 import { contentStatusLabels, serviceCategoryLabels } from '@/lib/admin-labels'
@@ -161,22 +162,21 @@ export function ProjectForm({ project }: { project: ProjectFormData }) {
 
         <AdminCard title="รูปภาพและลิงก์">
           <div className="space-y-5">
-            <Field htmlFor="coverImage" label="รูปปก (URL)" required>
-              <Input
-                id="coverImage"
-                name="coverImage"
-                required
-                defaultValue={project.coverImage}
-                placeholder="https://pub-xxxx.r2.dev/projects/cover.jpg"
-              />
-            </Field>
+            <ImageField
+              name="coverImage"
+              label="รูปปก"
+              initial={project.coverImage}
+              folder="projects"
+              required
+              hint="สัดส่วนแนวนอนจะดูดีที่สุดบนการ์ดผลงาน"
+            />
 
-            <RepeatableInput
+            <ImageListField
               name="mediaUrl"
               label="รูปในแกลเลอรี"
               initial={project.mediaUrls}
-              placeholder="https://pub-xxxx.r2.dev/projects/01.jpg"
-              addLabel="เพิ่มรูป"
+              folder="projects"
+              hint="ลำดับที่เห็นคือลำดับที่แสดงบนหน้าเว็บ"
             />
 
             <div className="grid gap-5 sm:grid-cols-3">

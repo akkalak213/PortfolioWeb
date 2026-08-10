@@ -4,7 +4,8 @@ import Link from 'next/link'
 import { useActionState } from 'react'
 import { EquipmentCategory, EquipmentStatus } from '@/generated/prisma/enums'
 import { AdminCard } from '@/components/admin/AdminPage'
-import { BilingualTabs, PairInput, RepeatableInput, SubmitButton } from '@/components/admin/AdminUI'
+import { BilingualTabs, PairInput, SubmitButton } from '@/components/admin/AdminUI'
+import { ImageField, ImageListField } from '@/components/admin/ImageField'
 import { buttonClasses } from '@/components/ui/Button'
 import { Field, FormMessage, Input, Select, Textarea } from '@/components/ui/Form'
 import { equipmentCategoryLabels, equipmentStatusLabels } from '@/lib/admin-labels'
@@ -166,14 +167,18 @@ export function EquipmentForm({ item }: { item: EquipmentFormData }) {
               valuePlaceholder="ค่า เช่น Full-frame 10.2MP"
               addLabel="เพิ่มสเปก"
             />
-            <Field htmlFor="image" label="รูปหลัก (URL)">
-              <Input id="image" name="image" defaultValue={item.image} />
-            </Field>
-            <RepeatableInput
+            <ImageField
+              name="image"
+              label="รูปหลัก"
+              initial={item.image}
+              folder="equipment"
+              hint="ถ่ายบนพื้นเรียบสีเดียวจะดูเป็นระเบียบที่สุด"
+            />
+            <ImageListField
               name="gallery"
               label="รูปเพิ่มเติม"
               initial={item.gallery}
-              addLabel="เพิ่มรูป"
+              folder="equipment"
             />
           </div>
         </AdminCard>

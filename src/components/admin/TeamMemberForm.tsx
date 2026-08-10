@@ -2,6 +2,7 @@
 
 import { useActionState } from 'react'
 import { SubmitButton } from '@/components/admin/AdminUI'
+import { ImageField } from '@/components/admin/ImageField'
 import { Field, FormMessage, Input, Textarea } from '@/components/ui/Form'
 import { initialAdminState } from '@/server/admin-state'
 import { deleteTeamMember, saveTeamMember } from '@/server/cms-actions'
@@ -49,9 +50,13 @@ export function TeamMemberForm({ member }: { member: TeamMemberFormData }) {
           <Field htmlFor={`name-${member.id}`} label="ชื่อ" required>
             <Input id={`name-${member.id}`} name="name" required defaultValue={member.name} />
           </Field>
-          <Field htmlFor={`photo-${member.id}`} label="รูป (URL)">
-            <Input id={`photo-${member.id}`} name="photo" defaultValue={member.photo} />
-          </Field>
+          <ImageField
+            name="photo"
+            label="รูปประจำตัว"
+            initial={member.photo}
+            folder="team"
+            hint="รูปสี่เหลี่ยมจัตุรัสจะครอบได้พอดีที่สุด"
+          />
           <Field htmlFor={`roleTh-${member.id}`} label="ตำแหน่ง (ไทย)">
             <Input id={`roleTh-${member.id}`} name="roleTh" defaultValue={member.roleTh} />
           </Field>
