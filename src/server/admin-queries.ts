@@ -161,3 +161,131 @@ export const getReviewsForModeration = cache(async (status: ReviewStatus = 'PEND
     >,
   }
 })
+
+// ──────────────────── CMS: รายการและรายละเอียด ────────────────────
+
+export const getAdminProjects = cache(() =>
+  db.project.findMany({
+    orderBy: [{ status: 'asc' }, { order: 'asc' }, { createdAt: 'desc' }],
+    select: {
+      id: true,
+      slug: true,
+      titleTh: true,
+      category: true,
+      status: true,
+      isFeatured: true,
+      year: true,
+      clientName: true,
+      coverImage: true,
+      order: true,
+      _count: { select: { media: true } },
+    },
+  }),
+)
+
+export const getAdminProject = cache((id: string) =>
+  db.project.findUnique({
+    where: { id },
+    include: { media: { orderBy: { order: 'asc' } } },
+  }),
+)
+
+export const getAdminEquipmentList = cache(() =>
+  db.equipment.findMany({
+    orderBy: [{ isActive: 'desc' }, { category: 'asc' }, { order: 'asc' }],
+  }),
+)
+
+export const getAdminEquipmentItem = cache((id: string) =>
+  db.equipment.findUnique({ where: { id } }),
+)
+
+export const getAdminServices = cache(() =>
+  db.service.findMany({
+    orderBy: { order: 'asc' },
+    include: { _count: { select: { packages: true, projects: true } } },
+  }),
+)
+
+export const getAdminService = cache((id: string) =>
+  db.service.findUnique({
+    where: { id },
+    include: { packages: { orderBy: { order: 'asc' } } },
+  }),
+)
+
+export const getAdminPosts = cache(() =>
+  db.post.findMany({
+    orderBy: [{ status: 'asc' }, { publishedAt: 'desc' }, { createdAt: 'desc' }],
+    select: {
+      id: true,
+      slug: true,
+      titleTh: true,
+      status: true,
+      isFeatured: true,
+      tags: true,
+      readingMinutes: true,
+      publishedAt: true,
+    },
+  }),
+)
+
+export const getAdminPost = cache((id: string) => db.post.findUnique({ where: { id } }))
+
+export const getAdminTeam = cache(() => db.teamMember.findMany({ orderBy: { order: 'asc' } }))
+
+export const getAdminSettings = cache(async () => {
+  const rows = await db.siteSetting.findMany()
+  return Object.fromEntries(rows.map((r) => [r.key, r.value])) as Record<
+    string,
+    Record<string, unknown> | undefined
+  >
+})
+
+// ──────────────────── ใบเสนอราคา ────────────────────
+
+export const getQuotes = cache(() =>
+  db.quote.findMany({
+    orderBy: [{ issueDate: 'desc' }],
+    take: 200,
+    select: {
+      id: true,
+      quoteNumber: true,
+      customerName: true,
+      customerCompany: true,
+      status: true,
+      total: true,
+      issueDate: true,
+      validUntil: true,
+      lead: { select: { id: true, refCode: true } },
+    },
+  }),
+)
+
+export const getQuote = cache((id: string) =>
+  db.quote.findUnique({
+    where: { id },
+    include: {
+      items: { orderBy: { order: 'asc' } },
+      lead: { select: { id: true, refCode: true } },
+      createdBy: { select: { name: true } },
+    },
+  }),
+)
+
+/** ข้อมูลลูกค้าจาก lead ใช้เติมฟอร์มใบเสนอราคาให้อัตโนมัติ */
+export const getLeadForQuote = cache((id: string) =>
+  db.lead.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      refCode: true,
+      name: true,
+      email: true,
+      phone: true,
+      company: true,
+      locale: true,
+      items: { select: { labelSnapshot: true, quantity: true, days: true } },
+    },
+  }),
+)

@@ -1,0 +1,207 @@
+'use client'
+
+import { Plus, Trash2 } from 'lucide-react'
+import { useState, type ReactNode } from 'react'
+import { useFormStatus } from 'react-dom'
+import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Form'
+import { cn } from '@/lib/utils'
+
+/**
+ * ชิ้นส่วนฟอร์มที่หน้า CMS ทุกหน้าใช้ร่วมกัน
+ *
+ * แนวคิด: หลีกเลี่ยงการเก็บ state ทั้งฟอร์มไว้ใน React
+ * ให้ input ชื่อซ้ำกันหลายตัวแล้วอ่านด้วย formData.getAll() ฝั่ง server
+ * ฟอร์มจึงยังทำงานได้แม้ JavaScript โหลดไม่ทัน และโค้ดสั้นกว่ามาก
+ */
+
+export function SubmitButton({
+  children,
+  pendingLabel = 'กำลังบันทึก',
+  ...props
+}: {
+  children: ReactNode
+  pendingLabel?: string
+  variant?: 'primary' | 'accent' | 'outline' | 'ghost'
+  size?: 'sm' | 'md' | 'lg'
+}) {
+  const { pending } = useFormStatus()
+  return (
+    <Button type="submit" disabled={pending} {...props}>
+      {pending ? pendingLabel : children}
+    </Button>
+  )
+}
+
+/** สลับกรอกไทย/อังกฤษในที่เดียว — input ทั้งสองภาษาอยู่ใน DOM เสมอ แค่ซ่อนอันที่ไม่ได้เลือก */
+export function BilingualTabs({
+  th,
+  en,
+  className,
+}: {
+  th: ReactNode
+  en: ReactNode
+  className?: string
+}) {
+  const [locale, setLocale] = useState<'th' | 'en'>('th')
+
+  return (
+    <div className={cn('rounded-lg border border-border', className)}>
+      <div className="flex border-b border-border">
+        {(['th', 'en'] as const).map((code) => (
+          <button
+            key={code}
+            type="button"
+            onClick={() => setLocale(code)}
+            aria-pressed={locale === code}
+            className={cn(
+              'px-5 py-2.5 text-sm font-medium transition-colors',
+              locale === code
+                ? 'border-b-2 border-accent text-accent'
+                : 'text-muted-foreground hover:text-foreground',
+            )}
+          >
+            {code === 'th' ? 'ภาษาไทย' : 'English'}
+          </button>
+        ))}
+      </div>
+
+      <div className="p-5">
+        <div hidden={locale !== 'th'} className="space-y-4">
+          {th}
+        </div>
+        <div hidden={locale !== 'en'} className="space-y-4">
+          {en}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/** รายการข้อความหลายบรรทัด เช่น จุดเด่นของบริการ หรือแท็กบทความ */
+export function RepeatableInput({
+  name,
+  label,
+  initial,
+  placeholder,
+  addLabel = 'เพิ่มรายการ',
+}: {
+  name: string
+  label: string
+  initial: string[]
+  placeholder?: string
+  addLabel?: string
+}) {
+  const [rows, setRows] = useState<string[]>(initial.length ? initial : [''])
+
+  return (
+    <fieldset>
+      <legend className="mb-2 text-sm font-medium">{label}</legend>
+      <div className="space-y-2">
+        {rows.map((value, index) => (
+          <div key={index} className="flex gap-2">
+            <Input
+              name={name}
+              defaultValue={value}
+              placeholder={placeholder}
+              aria-label={`${label} รายการที่ ${index + 1}`}
+            />
+            <button
+              type="button"
+              onClick={() => setRows((r) => r.filter((_, i) => i !== index))}
+              aria-label={`ลบ${label}รายการที่ ${index + 1}`}
+              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-input text-muted-foreground transition-colors hover:border-destructive hover:text-destructive"
+            >
+              <Trash2 size={16} strokeWidth={1.75} />
+            </button>
+          </div>
+        ))}
+      </div>
+      <button
+        type="button"
+        onClick={() => setRows((r) => [...r, ''])}
+        className="mt-2 inline-flex items-center gap-1.5 text-sm text-accent transition-opacity hover:opacity-80"
+      >
+        <Plus size={15} strokeWidth={2} />
+        {addLabel}
+      </button>
+    </fieldset>
+  )
+}
+
+/**
+ * คู่ข้อความสองช่อง ใช้กับสเปกอุปกรณ์ (หัวข้อ/ค่า), FAQ (คำถาม/คำตอบ) และขั้นตอนงาน (ชื่อ/รายละเอียด)
+ * ส่งออกเป็น input สองชุดชื่อ `${name}Key` และ `${name}Value` แล้วให้ฝั่ง server จับคู่ตามลำดับ
+ */
+export function PairInput({
+  name,
+  label,
+  initial,
+  keyPlaceholder,
+  valuePlaceholder,
+  valueMultiline = false,
+  addLabel = 'เพิ่มรายการ',
+}: {
+  name: string
+  label: string
+  initial: { key: string; value: string }[]
+  keyPlaceholder?: string
+  valuePlaceholder?: string
+  valueMultiline?: boolean
+  addLabel?: string
+}) {
+  const [rows, setRows] = useState(initial.length ? initial : [{ key: '', value: '' }])
+
+  return (
+    <fieldset>
+      <legend className="mb-2 text-sm font-medium">{label}</legend>
+      <div className="space-y-3">
+        {rows.map((row, index) => (
+          <div key={index} className="flex gap-2">
+            <div className="grid flex-1 gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)]">
+              <Input
+                name={`${name}Key`}
+                defaultValue={row.key}
+                placeholder={keyPlaceholder}
+                aria-label={`${label} หัวข้อรายการที่ ${index + 1}`}
+              />
+              {valueMultiline ? (
+                <textarea
+                  name={`${name}Value`}
+                  defaultValue={row.value}
+                  placeholder={valuePlaceholder}
+                  aria-label={`${label} รายละเอียดรายการที่ ${index + 1}`}
+                  className="min-h-[2.75rem] w-full rounded-md border border-input bg-surface px-3.5 py-2.5 text-sm transition-colors hover:border-foreground/25 focus:border-ring"
+                  rows={2}
+                />
+              ) : (
+                <Input
+                  name={`${name}Value`}
+                  defaultValue={row.value}
+                  placeholder={valuePlaceholder}
+                  aria-label={`${label} ค่ารายการที่ ${index + 1}`}
+                />
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => setRows((r) => r.filter((_, i) => i !== index))}
+              aria-label={`ลบ${label}รายการที่ ${index + 1}`}
+              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-input text-muted-foreground transition-colors hover:border-destructive hover:text-destructive"
+            >
+              <Trash2 size={16} strokeWidth={1.75} />
+            </button>
+          </div>
+        ))}
+      </div>
+      <button
+        type="button"
+        onClick={() => setRows((r) => [...r, { key: '', value: '' }])}
+        className="mt-2 inline-flex items-center gap-1.5 text-sm text-accent transition-opacity hover:opacity-80"
+      >
+        <Plus size={15} strokeWidth={2} />
+        {addLabel}
+      </button>
+    </fieldset>
+  )
+}
