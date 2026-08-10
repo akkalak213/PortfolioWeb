@@ -50,6 +50,18 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
 
+# ───────── Prisma CLI สำหรับรัน migration ตอนสตาร์ต ─────────
+# ติดตั้งแยกในโฟลเดอร์ของตัวเอง เพื่อให้ได้ dependency ครบทั้งสายโดยไม่ต้องไล่คัดลอกทีละตัว
+FROM base AS prisma-cli
+WORKDIR /migrate
+COPY package.json ./
+# อ่านเวอร์ชันจาก package.json เพื่อไม่ให้ CLI กับ schema หลุดเวอร์ชันกันภายหลัง
+# dotenv จำเป็นเพราะ prisma.config.ts เปิดไฟล์ด้วย import 'dotenv/config'
+RUN PRISMA_VERSION=$(node -p 'require("./package.json").devDependencies.prisma') \
+  && echo "ติดตั้ง prisma@${PRISMA_VERSION}" \
+  && npm install --no-audit --no-fund "prisma@${PRISMA_VERSION}" dotenv
+
+
 # ──────────────────── runtime ────────────────────
 FROM base AS runner
 ENV NODE_ENV=production
@@ -65,15 +77,12 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# ต้องใช้ตอนรัน prisma migrate deploy ก่อนสตาร์ต
-COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
-COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.ts ./prisma.config.ts
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/prisma ./node_modules/prisma
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
-# prisma.config.ts เปิดไฟล์ด้วย import 'dotenv/config' — ขาดไปแล้ว migrate deploy จะพังตั้งแต่โหลด config
-# (บน Railway ค่าจริงมาจาก environment variable อยู่แล้ว dotenv แค่ทำให้ไฟล์ config โหลดผ่าน)
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/dotenv ./node_modules/dotenv
+# Prisma CLI อยู่แยกที่ /migrate ไม่ปนกับ node_modules ของ standalone
+# แยกเพราะ CLI ลาก dependency ยาวเป็นสาย (@prisma/config → c12, effect, empathic, …)
+# การหยิบมาทีละแพ็กเกจไม่มีวันครบ ส่วน standalone ก็ไม่รวมมาให้เพราะแอปไม่ได้เรียกใช้
+COPY --from=prisma-cli --chown=nextjs:nodejs /migrate/node_modules /migrate/node_modules
+COPY --from=builder --chown=nextjs:nodejs /app/prisma /migrate/prisma
+COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.ts /migrate/prisma.config.ts
 
 USER nextjs
 
@@ -83,4 +92,7 @@ ENV HOSTNAME=0.0.0.0
 
 # รัน migration ที่ยังไม่ได้ apply ก่อนเปิดรับ traffic
 # ถ้า migration ล้มเหลว container จะไม่สตาร์ต ดีกว่าเปิดเว็บด้วย schema ที่ไม่ตรง
-CMD ["sh", "-c", "npx prisma migrate deploy && node server.js"]
+#
+# เรียก entry point ตรง ๆ ไม่ผ่าน npx เพราะ npx จะไปหา node_modules/.bin/prisma
+# ซึ่งเป็น symlink ที่ COPY ของ Docker ทำพังตั้งแต่ตอนคัดลอก
+CMD ["sh", "-c", "cd /migrate && node node_modules/prisma/build/index.js migrate deploy && cd /app && node server.js"]
