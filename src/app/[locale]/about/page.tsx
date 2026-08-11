@@ -72,7 +72,7 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
       </Section>
 
       <Section tone="subtle" title={t('valuesTitle')}>
-        <ul className="grid gap-px overflow-hidden rounded-lg border border-border bg-border md:grid-cols-3">
+        <ul className="reveal-stagger grid gap-px overflow-hidden rounded-lg border border-border bg-border md:grid-cols-3">
           {values.map(({ icon: Icon, title, body }) => (
             <li key={title} className="bg-background p-8">
               <span className="inline-flex h-11 w-11 items-center justify-center rounded-md bg-accent-subtle text-accent">

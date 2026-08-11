@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
 import { Faq, type FaqItem } from '@/components/ui/Faq'
 import { LeadForm } from '@/components/forms/LeadForm'
+import { ChoosePackageButton } from '@/components/services/ChoosePackageButton'
 import { ProjectCard } from '@/components/work/ProjectCard'
 import { Section } from '@/components/ui/Section'
 import { ServiceIcon } from '@/components/ui/ServiceIcon'
@@ -182,7 +183,7 @@ export default async function ServiceDetailPage({
 
       {process.length > 0 && (
         <Section tone="subtle" eyebrow={t('processTitle')} title={t('processSubtitle')}>
-          <ol className="grid gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-2 lg:grid-cols-4">
+          <ol className="reveal-stagger grid gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-2 lg:grid-cols-4">
             {process.map((step, index) => (
               <li key={step.title} className="bg-background p-7">
                 <span className="tabular font-display text-3xl text-accent">
@@ -200,7 +201,7 @@ export default async function ServiceDetailPage({
 
       {service.packages.length > 0 && (
         <Section eyebrow={t('packagesTitle')} title={t('packagesTitle')} subtitle={t('packagesSubtitle')}>
-          <ul className="grid gap-6 lg:grid-cols-3">
+          <ul className="reveal-stagger grid gap-6 lg:grid-cols-3">
             {service.packages.map((pkg) => {
               const price = formatPrice(pkg.priceFrom, locale)
               const includes = isThai ? pkg.includesTh : pkg.includesEn
@@ -253,6 +254,14 @@ export default async function ServiceDetailPage({
                       </ul>
                     </>
                   )}
+
+                  <ChoosePackageButton
+                    packageName={isThai ? pkg.nameTh : pkg.nameEn}
+                    serviceName={title}
+                    label={t('packageChoose')}
+                    chosenLabel={t('packageChosen')}
+                    className={pkg.isPopular ? 'border-accent bg-accent text-accent-foreground hover:bg-accent/90 hover:text-accent-foreground' : undefined}
+                  />
                 </li>
               )
             })}
@@ -273,7 +282,7 @@ export default async function ServiceDetailPage({
           eyebrow={tCat(service.category)}
           title={t('relatedWorkTitle')}
         >
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="reveal-stagger grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
             {relatedProjects.slice(0, 3).map((project) => (
               <ProjectCard key={project.id} project={project} locale={locale} />
             ))}
@@ -288,7 +297,10 @@ export default async function ServiceDetailPage({
         subtitle={t('ctaSubtitle')}
         align="center"
       >
-        <div className="mx-auto max-w-2xl rounded-lg border border-border bg-surface p-7 md:p-9">
+        <div
+          id="lead-form"
+          className="mx-auto max-w-2xl scroll-mt-24 rounded-lg border border-border bg-surface p-7 md:p-9"
+        >
           <LeadForm source="SERVICE_PAGE" defaultService={service.category} />
         </div>
       </Section>

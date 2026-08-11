@@ -289,7 +289,7 @@ export default async function ProjectDetailPage({
 
       {related.length > 0 && (
         <Section tone="subtle" title={t('relatedTitle')}>
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="reveal-stagger grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
             {related.map((item) => (
               <ProjectCard key={item.id} project={item} locale={locale} />
             ))}

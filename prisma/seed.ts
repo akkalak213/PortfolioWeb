@@ -57,7 +57,7 @@ const services = [
     icon: 'Globe',
     titleTh: 'เว็บไซต์องค์กร',
     titleEn: 'Corporate Websites',
-    taglineTh: 'หน้าร้านออนไลน์ที่โหลดไว ค้นเจอบน Google และแก้เนื้อหาเองได้',
+    taglineTh: 'เว็บที่โหลดไว ค้นเจอใน Google และคุณแก้เนื้อหาเองได้',
     taglineEn: 'Fast, findable sites your team can update without a developer',
     descriptionTh:
       'เราออกแบบและพัฒนาเว็บไซต์ให้ธุรกิจที่ต้องการมากกว่าหน้าเว็บสวย ๆ ทุกโปรเจกต์มาพร้อมระบบจัดการเนื้อหา โครงสร้าง SEO ที่วางมาตั้งแต่แรก และคะแนน PageSpeed ที่วัดผลได้จริง ไม่ใช่เทมเพลตสำเร็จรูปที่ปรับอะไรไม่ได้',
@@ -134,7 +134,7 @@ const services = [
     icon: 'LayoutDashboard',
     titleTh: 'เว็บแอปพลิเคชัน',
     titleEn: 'Web Applications',
-    taglineTh: 'ระบบหลังบ้านที่ออกแบบตามวิธีทำงานจริงของทีมคุณ',
+    taglineTh: 'ระบบที่ทำตามวิธีทำงานของคุณ ไม่ใช่บังคับให้คุณทำตามระบบ',
     taglineEn: 'Internal systems shaped around how your team actually works',
     descriptionTh:
       'ระบบจัดการคลัง ระบบจองคิว แดชบอร์ดผู้บริหาร หรือระบบที่ยังไม่มีใครทำขาย เราสร้างให้ตรงกับกระบวนการของคุณ ไม่ใช่บังคับให้คุณเปลี่ยนวิธีทำงานตามซอฟต์แวร์สำเร็จรูป',
@@ -208,7 +208,7 @@ const services = [
     icon: 'Smartphone',
     titleTh: 'แอปพลิเคชันมือถือ',
     titleEn: 'Mobile Applications',
-    taglineTh: 'แอป iOS และ Android จากโค้ดชุดเดียว ขึ้นสโตร์จริง',
+    taglineTh: 'แอปขึ้นทั้ง iOS และ Android เราส่งขึ้นสโตร์ให้จนผ่าน',
     taglineEn: 'One codebase, both stores, all the way to publication',
     descriptionTh:
       'พัฒนาแอปด้วย React Native ทำให้ได้ทั้ง iOS และ Android จากโค้ดชุดเดียว ประหยัดทั้งงบและเวลาดูแลระยะยาว เราดูแลตั้งแต่ออกแบบจนถึงผ่านการตรวจของ App Store และ Google Play',
@@ -349,7 +349,7 @@ const services = [
     icon: 'Clapperboard',
     titleTh: 'งานวิดีโอ',
     titleEn: 'Video Production',
-    taglineTh: 'ตั้งแต่บทจนถึงไฟล์ส่งลูกค้า จบในทีมเดียว',
+    taglineTh: 'ตั้งแต่คิดบทจนได้ไฟล์ ไม่ต้องต่อสายหาใครเพิ่ม',
     taglineEn: 'Script to final file, handled by one team',
     descriptionTh:
       'วิดีโอโฆษณา สารคดีองค์กร คอนเทนต์โซเชียล และงานอีเวนต์ เราดูแลครบตั้งแต่เขียนบท ถ่ายทำ ตัดต่อ ปรับสี ทำเสียง จนถึงส่งไฟล์ในสัดส่วนที่แต่ละแพลตฟอร์มต้องการ',
@@ -423,7 +423,7 @@ const services = [
     icon: 'Warehouse',
     titleTh: 'เช่าสตูดิโอ',
     titleEn: 'Studio Rental',
-    taglineTh: 'พื้นที่ถ่ายทำพร้อมไฟและฉาก จองเป็นชั่วโมงได้',
+    taglineTh: 'ห้องถ่ายพร้อมไฟและฉาก จองเป็นชั่วโมงก็ได้',
     taglineEn: 'A shoot-ready space with lights and cyclorama, bookable by the hour',
     descriptionTh:
       'สตูดิโอเพดานสูงพร้อมฉากโค้งขาว ชุดไฟครบ ห้องแต่งตัว และที่จอดรถ เหมาะกับงานถ่ายสินค้า ถ่ายบุคคล ถ่ายวิดีโอ และไลฟ์สด จองเป็นชั่วโมงหรือเหมาวันก็ได้',
@@ -825,12 +825,14 @@ const settings: Record<string, unknown> = {
     line: '',
   },
   hero: {
-    eyebrowTh: 'โปรดักชันเฮาส์ครบวงจร',
-    eyebrowEn: 'Full-service production house',
-    headlineTh: 'เราสร้างสิ่งที่ธุรกิจคุณต้องใช้จริง',
-    headlineEn: 'We build what your business actually needs',
-    subheadlineTh: 'เว็บไซต์ แอปพลิเคชัน งานภาพ และงานวิดีโอ จากทีมเดียวที่คุยกันรู้เรื่องตั้งแต่ต้นจนจบ',
-    subheadlineEn: 'Websites, applications, photography, and film — from one team that stays with you start to finish.',
+    eyebrowTh: 'รับทำเว็บ ถ่ายภาพ ถ่ายวิดีโอ',
+    eyebrowEn: 'Websites, photography, film',
+    headlineTh: 'งานเว็บกับงานภาพ จบที่ทีมเดียว',
+    headlineEn: 'The web side and the visual side, one team',
+    subheadlineTh:
+      'ไม่ต้องหาช่างภาพเจ้าหนึ่ง คนทำเว็บอีกเจ้าหนึ่ง แล้วมานั่งประสานเอง เราทำให้ทั้งหมดและคุณคุยกับเราที่เดียว',
+    subheadlineEn:
+      'No hiring a photographer here and a developer there, then coordinating them yourself. We do both, and you talk to one team.',
   },
   quote: {
     defaultValidDays: 30,

@@ -1,7 +1,7 @@
 'use client'
 
 import { useLocale, useTranslations } from 'next-intl'
-import { useTransition } from 'react'
+import { useEffect, useTransition } from 'react'
 import { usePathname, useRouter } from '@/i18n/navigation'
 import { localeLabels, locales, type Locale } from '@/i18n/routing'
 import { cn } from '@/lib/utils'
@@ -12,6 +12,15 @@ export function LocaleSwitcher({ className }: { className?: string }) {
   const router = useRouter()
   const pathname = usePathname()
   const [isPending, startTransition] = useTransition()
+
+  // หรี่เนื้อหาลงระหว่างรอหน้าใหม่ แล้วคืนกลับเมื่อเสร็จ
+  // ทำผ่าน attribute บน <html> เพราะ CSS เข้าถึงได้ทั้งต้นไม้โดยไม่ต้องส่ง state ลงไปทุกชั้น
+  useEffect(() => {
+    document.documentElement.dataset.localeSwitching = String(isPending)
+    return () => {
+      delete document.documentElement.dataset.localeSwitching
+    }
+  }, [isPending])
 
   const switchTo = (next: Locale) => {
     if (next === active) return

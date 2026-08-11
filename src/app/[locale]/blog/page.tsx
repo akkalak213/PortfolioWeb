@@ -50,7 +50,7 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: L
           {t('empty')}
         </p>
       ) : (
-        <ul className="grid gap-x-8 gap-y-12 md:grid-cols-2 lg:grid-cols-3">
+        <ul className="reveal-stagger grid gap-x-8 gap-y-12 md:grid-cols-2 lg:grid-cols-3">
           {posts.map((post, index) => (
             <li key={post.id}>
               <article className="group h-full">

@@ -100,7 +100,7 @@ export default async function ReviewsPage({ params }: { params: Promise<{ locale
             {t('empty')}
           </p>
         ) : (
-          <ul className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <ul className="reveal-stagger grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {reviews.map((review) => (
               <li key={review.id}>
                 <ReviewCard review={review} locale={locale} />

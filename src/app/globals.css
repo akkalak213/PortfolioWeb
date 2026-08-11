@@ -221,16 +221,57 @@
       .reveal {
         animation: reveal-in linear both;
         animation-timeline: view();
-        animation-range: entry 8% cover 30%;
+        animation-range: entry 8% cover 32%;
       }
 
-      /* ไล่จังหวะทีละใบในกริด ให้ดูมีชีวิตกว่าโผล่พร้อมกันทั้งแถว */
+      /**
+       * ไล่จังหวะทีละใบในกริด
+       *
+       * ใช้ animation-range ที่ต่างกันทีละใบแทน animation-delay
+       * เพราะ delay ใช้กับ scroll timeline ไม่ได้ — จังหวะผูกกับตำแหน่งเลื่อน ไม่ใช่เวลา
+       * การขยับจุดเริ่มของแต่ละใบจึงเป็นวิธีเดียวที่ทำให้เหลื่อมกันจริง
+       */
       .reveal-stagger > * {
         animation: reveal-in linear both;
         animation-timeline: view();
-        animation-range: entry 5% cover 28%;
+        animation-range: entry 4% cover 26%;
+      }
+      .reveal-stagger > *:nth-child(3n + 2) {
+        animation-range: entry 8% cover 30%;
+      }
+      .reveal-stagger > *:nth-child(3n + 3) {
+        animation-range: entry 12% cover 34%;
+      }
+
+      /* ภาพค่อย ๆ คลายซูมตอนเลื่อนผ่าน ให้หน้ารู้สึกมีมิติโดยไม่รบกวนการอ่าน */
+      .reveal-zoom img {
+        animation: reveal-zoom linear both;
+        animation-timeline: view();
+        animation-range: entry 0% cover 60%;
       }
     }
+  }
+
+  /**
+   * ตอนสลับภาษา เนื้อหาทั้งหน้าเปลี่ยนทั้งข้อความและฟอนต์พร้อมกัน
+   * ถ้าปล่อยให้สลับดิบ ๆ จะเห็นเป็นการกระตุกหนึ่งจังหวะ
+   * หรี่ลงเล็กน้อยระหว่างรอแล้วค่อยคืนกลับ ทำให้อ่านเป็นการเปลี่ยนที่ตั้งใจ
+   */
+  html[data-locale-switching='true'] main {
+    opacity: 0.45;
+    transition: opacity 120ms ease-out;
+  }
+  main {
+    transition: opacity 220ms ease-in;
+  }
+}
+
+@keyframes reveal-zoom {
+  from {
+    transform: scale(1.06);
+  }
+  to {
+    transform: scale(1);
   }
 }
 

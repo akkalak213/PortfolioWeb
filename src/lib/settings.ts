@@ -67,14 +67,14 @@ const defaults: SiteSettings = {
   },
   social: { facebook: '', instagram: '', youtube: '', tiktok: '', line: '' },
   hero: {
-    eyebrowTh: 'โปรดักชันเฮาส์ครบวงจร',
-    eyebrowEn: 'Full-service production house',
-    headlineTh: 'เราสร้างสิ่งที่ธุรกิจคุณต้องใช้จริง',
-    headlineEn: 'We build what your business actually needs',
+    eyebrowTh: 'รับทำเว็บ ถ่ายภาพ ถ่ายวิดีโอ',
+    eyebrowEn: 'Websites, photography, film',
+    headlineTh: 'งานเว็บกับงานภาพ จบที่ทีมเดียว',
+    headlineEn: 'The web side and the visual side, one team',
     subheadlineTh:
-      'เว็บไซต์ แอปพลิเคชัน งานภาพ และงานวิดีโอ จากทีมเดียวที่คุยกันรู้เรื่องตั้งแต่ต้นจนจบ',
+      'ไม่ต้องหาช่างภาพเจ้าหนึ่ง คนทำเว็บอีกเจ้าหนึ่ง แล้วมานั่งประสานเอง เราทำให้ทั้งหมดและคุณคุยกับเราที่เดียว',
     subheadlineEn:
-      'Websites, applications, photography, and film — from one team that stays with you start to finish.',
+      'No hiring a photographer here and a developer there, then coordinating them yourself. We do both, and you talk to one team.',
   },
 }
 

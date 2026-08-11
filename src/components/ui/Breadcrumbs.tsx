@@ -1,11 +1,18 @@
 import { ChevronRight } from 'lucide-react'
-import { useTranslations } from 'next-intl'
+import { getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
 
 type Crumb = { label: string; href?: string }
 
-export function Breadcrumbs({ items }: { items: Crumb[] }) {
-  const t = useTranslations('common')
+/**
+ * ใช้ getTranslations แบบ async ไม่ใช่ hook useTranslations
+ *
+ * คอมโพเนนต์นี้เป็น Server Component และถูกใช้เฉพาะในหน้ารายละเอียด
+ * ซึ่งเป็นกลุ่มหน้าเดียวที่ส่วนเนื้อหาไม่ hydrate จนฟอร์มกดไม่ได้
+ * ส่วน hook เป็น API ฝั่ง client — ในไฟล์ที่ไม่มี 'use client' ต้องใช้ตัว async
+ */
+export async function Breadcrumbs({ items }: { items: Crumb[] }) {
+  const t = await getTranslations('common')
 
   return (
     <nav aria-label={t('breadcrumb')} className="mb-8">
