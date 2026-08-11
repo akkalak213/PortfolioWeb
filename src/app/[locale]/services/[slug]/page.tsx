@@ -15,6 +15,7 @@ import { JsonLd } from '@/components/JsonLd'
 import { formatPrice, toNumber } from '@/lib/format'
 import { breadcrumbSchema, faqSchema, serviceSchema } from '@/lib/structured-data'
 import { cn } from '@/lib/utils'
+import { budgetRangeFor } from '@/lib/validations'
 import { getProjects, getServiceBySlug } from '@/server/queries'
 
 /**
@@ -256,8 +257,23 @@ export default async function ServiceDetailPage({
                   )}
 
                   <ChoosePackageButton
-                    packageName={isThai ? pkg.nameTh : pkg.nameEn}
-                    serviceName={title}
+                    pkg={{
+                      id: pkg.id,
+                      name: isThai ? pkg.nameTh : pkg.nameEn,
+                      serviceName: title,
+                      // ประกอบข้อความราคาชุดเดียวกับที่ลูกค้าเห็นบนการ์ด
+                      // เก็บเป็นข้อความไว้เลย ทีมขายจะได้รู้ว่าตอนกดเห็นราคาเท่าไหร่
+                      priceTag: price
+                        ? [
+                            pkg.isStartingPrice ? tc('startingFrom') : null,
+                            price,
+                            priceUnitLabel[pkg.priceUnit] || null,
+                          ]
+                            .filter(Boolean)
+                            .join(' ')
+                        : tc('customPrice'),
+                      budgetRange: budgetRangeFor(toNumber(pkg.priceFrom)),
+                    }}
                     label={t('packageChoose')}
                     chosenLabel={t('packageChosen')}
                     className={pkg.isPopular ? 'border-accent bg-accent text-accent-foreground hover:bg-accent/90 hover:text-accent-foreground' : undefined}

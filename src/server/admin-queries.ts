@@ -138,6 +138,10 @@ export const getLeadById = cache((id: string) =>
         orderBy: { createdAt: 'desc' },
         select: { id: true, quoteNumber: true, status: true, total: true, issueDate: true },
       },
+      // แพ็กเกจที่ลูกค้ากดเลือกมาจากหน้าบริการ อาจถูกลบไปแล้ว จึงต้องเช็ค null ตอนใช้
+      package: {
+        select: { id: true, service: { select: { id: true, titleTh: true } } },
+      },
     },
   }),
 )

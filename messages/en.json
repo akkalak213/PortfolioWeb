@@ -264,7 +264,9 @@
     "invalid": "Some fields are missing or incorrectly formatted. Check the highlighted fields below.",
     "serverError": "Something went wrong on our side. Please try again or email us directly.",
     "fieldRequired": "Required",
-    "sendAnother": "Send another"
+    "sendAnother": "Send another",
+    "selectedPackage": "Selected package",
+    "removePackage": "Remove"
   },
   "budget": {
     "under-50k": "Under 50,000",

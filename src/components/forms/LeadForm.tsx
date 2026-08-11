@@ -2,7 +2,7 @@
 
 import { Check } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
-import { useActionState } from 'react'
+import { useActionState, useState } from 'react'
 import { ServiceCategory } from '@/generated/prisma/enums'
 import { Button } from '@/components/ui/Button'
 import { Field, FormMessage, Honeypot, Input, Select, Textarea } from '@/components/ui/Form'
@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils'
 import { budgetRanges } from '@/lib/validations'
 import { initialActionState } from '@/server/action-state'
 import { submitLead } from '@/server/actions'
+import { usePackageSelection } from '@/components/services/PackageSelection'
 
 const categories = Object.values(ServiceCategory)
 
@@ -36,6 +37,24 @@ export function LeadForm({
   const locale = useLocale()
 
   const [state, formAction, isPending] = useActionState(submitLead, initialActionState)
+
+  // หน้าติดต่อทั่วไปไม่มี provider ครอบ ค่าที่ได้จะเป็น null ส่วนนี้จึงไม่แสดง
+  const { selected: selectedPackage, clear: clearPackage } = usePackageSelection()
+
+  /**
+   * ช่องงบประมาณเป็น controlled เพราะต้องเติมตามแพ็กเกจที่เพิ่งกดเลือก
+   * ผู้ใช้ยังเปลี่ยนเองได้ และถ้ากดเลือกแพ็กเกจใหม่จะทับค่าเดิมให้
+   *
+   * ปรับค่าระหว่างเรนเดอร์เมื่อแพ็กเกจเปลี่ยน แทนการเซ็ตใน useEffect
+   * เพราะแบบหลังทำให้เรนเดอร์สองรอบและผู้ใช้เห็นค่าเก่าแวบหนึ่งก่อน
+   */
+  const [budget, setBudget] = useState('')
+  const [syncedPackageId, setSyncedPackageId] = useState<string | null>(null)
+
+  if (selectedPackage && selectedPackage.id !== syncedPackageId) {
+    setSyncedPackageId(selectedPackage.id)
+    if (selectedPackage.budgetRange) setBudget(selectedPackage.budgetRange)
+  }
 
   const feedback: Record<string, string> = {
     rateLimited: t('rateLimited'),
@@ -64,6 +83,40 @@ export function LeadForm({
       {equipmentIds.map((id) => (
         <input key={id} type="hidden" name="equipmentIds" value={id} />
       ))}
+
+      {/*
+        แพ็กเกจที่กดเลือกมาจากด้านบนของหน้า
+        แสดงเป็นสรุปให้เห็นชัดว่าเลือกอะไรไว้ ไม่ใช่ข้อความที่แอบเติมลงช่องข้อความ
+        และส่งชื่อกับราคาไปกับคำขอ ทีมขายจึงรู้ทันทีว่าลูกค้าสนใจแพ็กเกจไหนที่ราคาเท่าไหร่
+      */}
+      {selectedPackage && (
+        <>
+          <input type="hidden" name="packageId" value={selectedPackage.id} />
+          <input type="hidden" name="packageName" value={selectedPackage.name} />
+          <input type="hidden" name="packagePriceTag" value={selectedPackage.priceTag} />
+
+          <div className="flex items-start justify-between gap-4 rounded-md border border-accent/40 bg-accent-subtle p-4">
+            <div className="min-w-0">
+              <p className="text-xs font-medium uppercase tracking-wider text-accent">
+                {t('selectedPackage')}
+              </p>
+              <p className="mt-1.5 font-medium">
+                {selectedPackage.serviceName} · {selectedPackage.name}
+              </p>
+              <p className="tabular mt-0.5 text-sm text-muted-foreground">
+                {selectedPackage.priceTag}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={clearPackage}
+              className="shrink-0 rounded-md px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-background hover:text-destructive"
+            >
+              {t('removePackage')}
+            </button>
+          </div>
+        </>
+      )}
 
       {equipmentLabels.length > 0 && (
         <div className="rounded-md border border-border bg-subtle p-4">
@@ -166,7 +219,12 @@ export function LeadForm({
       )}
 
       <Field htmlFor="budgetRange" label={t('budget')}>
-        <Select id="budgetRange" name="budgetRange" defaultValue="">
+        <Select
+          id="budgetRange"
+          name="budgetRange"
+          value={budget}
+          onChange={(e) => setBudget(e.target.value)}
+        >
           <option value="">{t('budgetPlaceholder')}</option>
           {budgetRanges.map((range) => (
             <option key={range} value={range}>

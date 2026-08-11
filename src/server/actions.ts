@@ -123,6 +123,9 @@ export async function submitLead(_prev: ActionState, formData: FormData): Promis
     budgetRange: formData.get('budgetRange') ?? '',
     message: formData.get('message') ?? '',
     equipmentIds: formData.getAll('equipmentIds').map(String).filter(Boolean),
+    packageId: formData.get('packageId') ?? '',
+    packageName: formData.get('packageName') ?? '',
+    packagePriceTag: formData.get('packagePriceTag') ?? '',
     source: formData.get('source') ?? 'CONTACT',
     website: formData.get('website') ?? '',
   })
@@ -143,8 +146,20 @@ export async function submitLead(_prev: ActionState, formData: FormData): Promis
   }
 
   const locale = formData.get('locale') === 'en' ? 'en' : 'th'
-  const { name, email, phone, company, services, budgetRange, message, equipmentIds, source } =
-    parsed.data
+  const {
+    name,
+    email,
+    phone,
+    company,
+    services,
+    budgetRange,
+    message,
+    equipmentIds,
+    source,
+    packageId,
+    packageName,
+    packagePriceTag,
+  } = parsed.data
 
   let refCode: string
   try {
@@ -171,6 +186,11 @@ export async function submitLead(_prev: ActionState, formData: FormData): Promis
         locale,
         source,
         ipHash,
+        // เก็บ id ไว้เชื่อมกลับหาแพ็กเกจ และเก็บชื่อกับราคาเป็นข้อความคู่กัน
+        // เผื่อแพ็กเกจถูกแก้ราคาหรือถูกลบ ทีมขายจะยังรู้ว่าตอนลูกค้ากดเห็นราคาเท่าไหร่
+        packageId: packageId || null,
+        packageName: packageName || null,
+        packagePriceTag: packagePriceTag || null,
         items: {
           create: equipment.map((e) => ({
             equipmentId: e.id,
@@ -193,6 +213,7 @@ export async function submitLead(_prev: ActionState, formData: FormData): Promis
           ['ที่มา', source],
           ['บริการที่สนใจ', services.join(', ')],
           ['งบประมาณ', budgetRange],
+          ['แพ็กเกจที่เลือก', packageName ? `${packageName} (${packagePriceTag})` : ''],
           ['อุปกรณ์', equipment.map((e) => `${e.brand} ${e.model}`).join('\n')],
           ['ข้อความ', message],
         ]),

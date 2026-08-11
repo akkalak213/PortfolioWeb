@@ -52,6 +52,10 @@ export const leadSchema = z.object({
   message: trimmed(10, 3000),
   /** รายการอุปกรณ์ที่เลือกจากหน้า /rental — ส่งมาเป็น id */
   equipmentIds: z.array(z.string().cuid2().or(z.string().min(1))).max(30).default([]),
+  /** แพ็กเกจที่กดเลือกจากหน้าบริการ */
+  packageId: z.string().max(40).optional().or(z.literal('')),
+  packageName: z.string().max(160).optional().or(z.literal('')),
+  packagePriceTag: z.string().max(120).optional().or(z.literal('')),
   source: z.enum(['CONTACT', 'QUOTE', 'RENTAL', 'SERVICE_PAGE']).default('CONTACT'),
   website: z.literal('').optional(),
 })
@@ -67,3 +71,15 @@ export const budgetRanges = [
 ] as const
 
 export type BudgetRange = (typeof budgetRanges)[number]
+
+/**
+ * จับราคาแพ็กเกจเข้าช่วงงบประมาณ ใช้เติมช่องงบให้อัตโนมัติเมื่อลูกค้ากดเลือกแพ็กเกจ
+ * ราคาแพ็กเกจเป็นราคาเริ่มต้น งานจริงมักบานปลายขึ้น จึงเลือกช่วงที่ครอบราคานั้นไว้
+ */
+export function budgetRangeFor(price: number | null): BudgetRange | null {
+  if (price === null) return null
+  if (price < 50_000) return 'under-50k'
+  if (price < 150_000) return '50k-150k'
+  if (price < 500_000) return '150k-500k'
+  return 'over-500k'
+}

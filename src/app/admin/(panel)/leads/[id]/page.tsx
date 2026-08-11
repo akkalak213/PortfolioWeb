@@ -51,6 +51,29 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
 
       <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
         <div className="space-y-6">
+          {/* แพ็กเกจที่ลูกค้ากดเลือกเอง — ตัวชี้เจตนาที่ชัดที่สุดว่าเขาสนใจอะไรและรับราคาไหนได้ */}
+          {lead.packageName && (
+            <section className="rounded-lg border border-accent/40 bg-accent-subtle p-5">
+              <h2 className="text-xs font-medium uppercase tracking-wider text-accent">
+                แพ็กเกจที่ลูกค้าเลือก
+              </h2>
+              <p className="mt-2 text-lg font-medium">
+                {lead.package?.service?.titleTh && `${lead.package.service.titleTh} · `}
+                {lead.packageName}
+              </p>
+              {lead.packagePriceTag && (
+                <p className="tabular mt-1 text-sm text-muted-foreground">
+                  ราคาที่ลูกค้าเห็นตอนกด: {lead.packagePriceTag}
+                </p>
+              )}
+              {!lead.package && (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  แพ็กเกจนี้ถูกลบออกจากระบบแล้ว ข้อมูลด้านบนเป็นค่าที่บันทึกไว้ตอนลูกค้าส่งคำขอ
+                </p>
+              )}
+            </section>
+          )}
+
           <section className="rounded-lg border border-border bg-surface p-5">
             <h2 className="mb-3 font-medium">ข้อความจากลูกค้า</h2>
             <p className="whitespace-pre-line rounded-md bg-subtle p-4 text-sm leading-relaxed">
