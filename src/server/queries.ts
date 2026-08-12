@@ -346,3 +346,29 @@ export const getHomeStats = cache(() =>
     { projects: 0, reviewCount: 0, averageRating: 0 },
   ),
 )
+
+/**
+ * แพ็กเกจที่ลูกค้ากดมาจากหน้าบริการ เพื่อเอาไปแสดงบนหน้าขอใบเสนอราคา
+ *
+ * ส่งมาแค่ id ทาง URL แล้วอ่านชื่อกับราคาจากฐานข้อมูลที่นี่
+ * ไม่ส่งราคามาทาง query string เพราะแก้ได้จากแถบที่อยู่ และทำให้ URL ยาวโดยไม่จำเป็น
+ */
+export const getPackageForQuote = cache((id: string) =>
+  safe(
+    'package-for-quote',
+    () =>
+      db.servicePackage.findFirst({
+        where: { id, isActive: true },
+        select: {
+          id: true,
+          nameTh: true,
+          nameEn: true,
+          priceFrom: true,
+          priceUnit: true,
+          isStartingPrice: true,
+          service: { select: { category: true, titleTh: true, titleEn: true } },
+        },
+      }),
+    null,
+  ),
+)

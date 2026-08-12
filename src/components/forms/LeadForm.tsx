@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils'
 import { budgetRanges } from '@/lib/validations'
 import { initialActionState } from '@/server/action-state'
 import { submitLead } from '@/server/actions'
-import { usePackageSelection } from '@/components/services/PackageSelection'
+import { usePackageSelection, type SelectedPackage } from '@/components/services/PackageSelection'
 
 const categories = Object.values(ServiceCategory)
 
@@ -22,6 +22,11 @@ type Props = {
   equipmentIds?: string[]
   equipmentLabels?: string[]
   showServicePicker?: boolean
+  /**
+   * แพ็กเกจที่ลูกค้ากดมาจากหน้าบริการ ส่งมาจากฝั่งเซิร์ฟเวอร์ผ่าน URL
+   * ทำให้ใช้งานได้โดยไม่ต้องพึ่ง JavaScript ฝั่งหน้าบริการเลย
+   */
+  initialPackage?: SelectedPackage | null
 }
 
 export function LeadForm({
@@ -30,6 +35,7 @@ export function LeadForm({
   equipmentIds = [],
   equipmentLabels = [],
   showServicePicker = true,
+  initialPackage = null,
 }: Props) {
   const t = useTranslations('forms')
   const tCat = useTranslations('serviceCategory')
@@ -38,18 +44,31 @@ export function LeadForm({
 
   const [state, formAction, isPending] = useActionState(submitLead, initialActionState)
 
-  // หน้าติดต่อทั่วไปไม่มี provider ครอบ ค่าที่ได้จะเป็น null ส่วนนี้จึงไม่แสดง
-  const { selected: selectedPackage, clear: clearPackage } = usePackageSelection()
+  /**
+   * แพ็กเกจมาได้สองทาง
+   *   1. ส่งมาจากฝั่งเซิร์ฟเวอร์ผ่าน URL (?package=...) — ทางหลักที่ใช้อยู่
+   *   2. กดเลือกในหน้าเดียวกันผ่าน store — สำรองไว้เผื่อหน้าบริการกลับมาใช้งานได้
+   */
+  const { selected: storePackage, clear: clearStorePackage } = usePackageSelection()
+  const [dismissed, setDismissed] = useState(false)
+  const selectedPackage = dismissed ? null : (storePackage ?? initialPackage)
+
+  const clearPackage = () => {
+    setDismissed(true)
+    clearStorePackage()
+  }
 
   /**
-   * ช่องงบประมาณเป็น controlled เพราะต้องเติมตามแพ็กเกจที่เพิ่งกดเลือก
-   * ผู้ใช้ยังเปลี่ยนเองได้ และถ้ากดเลือกแพ็กเกจใหม่จะทับค่าเดิมให้
+   * ช่องงบประมาณเป็น controlled เพราะต้องเติมตามแพ็กเกจที่เลือกมา
+   * ผู้ใช้ยังเปลี่ยนเองได้ และถ้าเปลี่ยนแพ็กเกจจะทับค่าเดิมให้
    *
    * ปรับค่าระหว่างเรนเดอร์เมื่อแพ็กเกจเปลี่ยน แทนการเซ็ตใน useEffect
    * เพราะแบบหลังทำให้เรนเดอร์สองรอบและผู้ใช้เห็นค่าเก่าแวบหนึ่งก่อน
    */
-  const [budget, setBudget] = useState('')
-  const [syncedPackageId, setSyncedPackageId] = useState<string | null>(null)
+  const [budget, setBudget] = useState(initialPackage?.budgetRange ?? '')
+  const [syncedPackageId, setSyncedPackageId] = useState<string | null>(
+    initialPackage?.id ?? null,
+  )
 
   if (selectedPackage && selectedPackage.id !== syncedPackageId) {
     setSyncedPackageId(selectedPackage.id)

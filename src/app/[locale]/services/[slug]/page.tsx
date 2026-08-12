@@ -1,13 +1,13 @@
-import { Check } from 'lucide-react'
+import { ArrowRight, Check } from 'lucide-react'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
+import { Link } from '@/i18n/navigation'
 import type { Locale } from '@/i18n/routing'
 import { Badge } from '@/components/ui/Badge'
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
 import { Faq, type FaqItem } from '@/components/ui/Faq'
 import { LeadForm } from '@/components/forms/LeadForm'
-import { ChoosePackageButton } from '@/components/services/ChoosePackageButton'
 import { ProjectCard } from '@/components/work/ProjectCard'
 import { Section } from '@/components/ui/Section'
 import { ServiceIcon } from '@/components/ui/ServiceIcon'
@@ -15,7 +15,6 @@ import { JsonLd } from '@/components/JsonLd'
 import { formatPrice, toNumber } from '@/lib/format'
 import { breadcrumbSchema, faqSchema, serviceSchema } from '@/lib/structured-data'
 import { cn } from '@/lib/utils'
-import { budgetRangeFor } from '@/lib/validations'
 import { getProjects, getServiceBySlug } from '@/server/queries'
 
 /**
@@ -256,28 +255,23 @@ export default async function ServiceDetailPage({
                     </>
                   )}
 
-                  <ChoosePackageButton
-                    pkg={{
-                      id: pkg.id,
-                      name: isThai ? pkg.nameTh : pkg.nameEn,
-                      serviceName: title,
-                      // ประกอบข้อความราคาชุดเดียวกับที่ลูกค้าเห็นบนการ์ด
-                      // เก็บเป็นข้อความไว้เลย ทีมขายจะได้รู้ว่าตอนกดเห็นราคาเท่าไหร่
-                      priceTag: price
-                        ? [
-                            pkg.isStartingPrice ? tc('startingFrom') : null,
-                            price,
-                            priceUnitLabel[pkg.priceUnit] || null,
-                          ]
-                            .filter(Boolean)
-                            .join(' ')
-                        : tc('customPrice'),
-                      budgetRange: budgetRangeFor(toNumber(pkg.priceFrom)),
-                    }}
-                    label={t('packageChoose')}
-                    chosenLabel={t('packageChosen')}
-                    className={pkg.isPopular ? 'border-accent bg-accent text-accent-foreground hover:bg-accent/90 hover:text-accent-foreground' : undefined}
-                  />
+                  {/*
+                    ลิงก์ธรรมดา ไม่ใช่ปุ่มที่ต้องรอ JavaScript
+                    ส่งไปแค่ id แล้วให้หน้า /contact อ่านชื่อกับราคาจากฐานข้อมูลเอง
+                    ราคาจึงเป็นค่าจริงเสมอและแก้จากแถบที่อยู่ไม่ได้
+                  */}
+                  <Link
+                    href={`/contact?package=${pkg.id}`}
+                    className={cn(
+                      'mt-7 inline-flex h-11 w-full items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors',
+                      pkg.isPopular
+                        ? 'bg-accent text-accent-foreground hover:bg-accent/90'
+                        : 'border border-input hover:border-accent hover:bg-accent-subtle hover:text-accent',
+                    )}
+                  >
+                    {t('packageChoose')}
+                    <ArrowRight size={15} strokeWidth={2} aria-hidden />
+                  </Link>
                 </li>
               )
             })}

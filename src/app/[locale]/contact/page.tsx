@@ -3,7 +3,10 @@ import type { Metadata } from 'next'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import type { Locale } from '@/i18n/routing'
 import { LeadForm } from '@/components/forms/LeadForm'
+import { formatPrice, toNumber } from '@/lib/format'
 import { getSiteSettings } from '@/lib/settings'
+import { budgetRangeFor } from '@/lib/validations'
+import { getPackageForQuote } from '@/server/queries'
 
 /**
  * สร้างหน้าใหม่อัตโนมัติทุก 10 นาที
@@ -32,13 +35,56 @@ export async function generateMetadata({
   }
 }
 
-export default async function ContactPage({ params }: { params: Promise<{ locale: Locale }> }) {
+export default async function ContactPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ locale: Locale }>
+  searchParams: Promise<{ package?: string }>
+}) {
   const { locale } = await params
+  const { package: packageId } = await searchParams
   setRequestLocale(locale)
 
-  const [t, settings] = await Promise.all([getTranslations('contact'), getSiteSettings()])
+  const [t, tc, settings, pkg] = await Promise.all([
+    getTranslations('contact'),
+    getTranslations('common'),
+    getSiteSettings(),
+    packageId ? getPackageForQuote(packageId) : null,
+  ])
   const { company } = settings
   const isThai = locale === 'th'
+
+  /**
+   * แพ็กเกจที่ลูกค้ากดมาจากหน้าบริการ
+   *
+   * URL ส่งมาแค่ id แล้วอ่านชื่อกับราคาจากฐานข้อมูลที่นี่
+   * ราคาจึงเป็นค่าจริงเสมอ แก้จากแถบที่อยู่ไม่ได้ และไม่ต้องพึ่ง JavaScript ฝั่งหน้าบริการ
+   */
+  const priceUnitLabel: Record<string, string> = {
+    PROJECT: tc('perProject'),
+    DAY: tc('perDay'),
+    HALF_DAY: tc('perHalfDay'),
+    HOUR: tc('perHour'),
+    MONTH: tc('perMonth'),
+    PERSON: tc('perPerson'),
+    CUSTOM: '',
+  }
+
+  const price = pkg ? formatPrice(pkg.priceFrom, locale) : null
+  const initialPackage = pkg
+    ? {
+        id: pkg.id,
+        name: isThai ? pkg.nameTh : pkg.nameEn,
+        serviceName: isThai ? pkg.service.titleTh : pkg.service.titleEn,
+        priceTag: price
+          ? [pkg.isStartingPrice ? tc('startingFrom') : null, price, priceUnitLabel[pkg.priceUnit]]
+              .filter(Boolean)
+              .join(' ')
+          : tc('customPrice'),
+        budgetRange: budgetRangeFor(toNumber(pkg.priceFrom)),
+      }
+    : null
 
   const details = [
     company.email && { icon: Mail, value: company.email, href: `mailto:${company.email}` },
@@ -67,7 +113,11 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
         <div className="mt-14 grid gap-12 lg:grid-cols-[1.4fr_1fr] lg:gap-20">
           <div className="rounded-lg border border-border bg-surface p-7 md:p-9">
             <h2 className="mb-7 font-display text-2xl">{t('formTitle')}</h2>
-            <LeadForm source="CONTACT" />
+            <LeadForm
+              source={initialPackage ? 'QUOTE' : 'CONTACT'}
+              initialPackage={initialPackage}
+              defaultService={pkg?.service.category}
+            />
           </div>
 
           <aside className="space-y-10">
