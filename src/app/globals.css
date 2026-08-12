@@ -296,6 +296,14 @@
       animation-duration: 29s;
       animation-delay: -15s;
     }
+    .mote-6 {
+      animation-duration: 31s;
+      animation-delay: -20s;
+    }
+    .beam-bounce {
+      animation: beam-breathe 13s ease-in-out infinite alternate;
+      animation-delay: -7s;
+    }
   }
 
   /**

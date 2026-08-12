@@ -217,53 +217,51 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
         พอ build บน Railway ต่อฐานข้อมูลไม่ได้ ทั้งส่วนเลยหายไปจากหน้าจริงทั้งดุ้น
       */}
       <section className="studio-panel relative overflow-hidden border-y border-border">
-        <div className="container relative py-20 md:py-28">
-          <div className="grid gap-14 lg:grid-cols-[1fr_1.05fr] lg:gap-20">
+        <div className="container relative pb-14 pt-20 md:pb-16 md:pt-28">
+          <div className="grid gap-12 lg:grid-cols-[1fr_1fr] lg:gap-20">
             <div className="reveal">
-                <p className="rule-draw mb-4 text-xs font-medium uppercase tracking-[0.18em] text-accent">
-                  {t('studioEyebrow')}
-                </p>
-                <h2 className="font-display text-display-md text-balance">{t('studioTitle')}</h2>
-                <p className="mt-5 text-lg leading-relaxed text-muted-foreground text-pretty">
-                  {t('studioSubtitle')}
-                </p>
+              <p className="rule-draw mb-4 text-xs font-medium uppercase tracking-[0.18em] text-accent">
+                {t('studioEyebrow')}
+              </p>
+              <h2 className="font-display text-display-md text-balance">{t('studioTitle')}</h2>
+              <p className="mt-5 text-lg leading-relaxed text-muted-foreground text-pretty">
+                {t('studioSubtitle')}
+              </p>
 
-                <ul className="mt-10 space-y-6">
-                  {studioPoints.map(({ icon: Icon, title, text }) => (
-                    <li key={title} className="flex gap-4">
-                      <span className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-accent-subtle text-accent">
-                        <Icon size={17} strokeWidth={1.75} aria-hidden />
-                      </span>
-                      <div>
-                        <p className="font-medium">{title}</p>
-                        <p className="mt-1 text-sm leading-relaxed text-muted-foreground text-pretty">
-                          {text}
-                        </p>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-
-                <dl className="mt-10 flex gap-10 border-t border-border pt-8">
-                  <div>
-                    <dt className="text-xs text-muted-foreground">{t('studioStatGear')}</dt>
-                    <dd className="tabular mt-1 font-display text-3xl">{equipment.length}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs text-muted-foreground">{t('studioStatCategories')}</dt>
-                    <dd className="tabular mt-1 font-display text-3xl">{gearGroups.length}</dd>
-                  </div>
-                </dl>
-
-                <Link href="/rental" className={buttonClasses('accent', 'lg', 'mt-9')}>
-                  {t('studioCta')}
-                  <ArrowRight size={18} strokeWidth={1.75} aria-hidden />
-                </Link>
+              <dl className="mt-10 flex gap-12 border-t border-border pt-8">
+                <div>
+                  <dt className="text-xs text-muted-foreground">{t('studioStatGear')}</dt>
+                  <dd className="tabular mt-1 font-display text-4xl">{equipment.length}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-muted-foreground">{t('studioStatCategories')}</dt>
+                  <dd className="tabular mt-1 font-display text-4xl">{gearGroups.length}</dd>
+                </div>
+              </dl>
             </div>
 
-            {/* ฉากสตูดิโอ วาดด้วย SVG ในโค้ด ไฟหายใจ ฝุ่นลอย ไฟกล้องกะพริบ */}
-            <div className="reveal self-center">
-              <StudioScene className="w-full" />
+            {/* จุดขายอยู่คนละคอลัมน์กับหัวเรื่อง สองฝั่งจึงหนักพอกันแทนที่จะกองอยู่ข้างเดียว */}
+            <div className="reveal lg:pt-2">
+              <ul className="space-y-7">
+                {studioPoints.map(({ icon: Icon, title, text }) => (
+                  <li key={title} className="flex gap-4">
+                    <span className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-accent-subtle text-accent">
+                      <Icon size={17} strokeWidth={1.75} aria-hidden />
+                    </span>
+                    <div>
+                      <p className="font-medium">{title}</p>
+                      <p className="mt-1 text-sm leading-relaxed text-muted-foreground text-pretty">
+                        {text}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+
+              <Link href="/rental" className={buttonClasses('accent', 'lg', 'mt-9')}>
+                {t('studioCta')}
+                <ArrowRight size={18} strokeWidth={1.75} aria-hidden />
+              </Link>
             </div>
           </div>
 
@@ -308,7 +306,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
         {gearNames.length > 0 && (
           <div
             aria-hidden
-            className="fade-edges-x relative overflow-hidden border-t border-border py-5"
+            className="fade-edges-x relative overflow-hidden border-y border-border py-5"
           >
             <div className="marquee-track">
               {[0, 1].map((copy) => (
@@ -327,6 +325,14 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
             </div>
           </div>
         )}
+
+        {/*
+          ฉากสตูดิโออยู่ล่างสุดของแผง เส้นพื้นจึงเป็นขอบล่างของ section พอดี
+          ไม่ได้อยู่ในคอนเทนเนอร์ ไม่มีกรอบ ไม่มีพื้นหลังของตัวเอง
+          ข้อความและการ์ดด้านบนจึงอ่านเป็นของที่ตั้งอยู่ในห้องเดียวกับฉาก
+          ไม่ใช่ข้อความที่มีรูปแปะอยู่ข้าง ๆ แบบเดิม
+        */}
+        <StudioScene className="block h-[190px] w-full sm:h-[240px] lg:h-[300px]" />
       </section>
 
       {/* ───────────── ผลงานเด่น ───────────── */}
