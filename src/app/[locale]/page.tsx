@@ -7,6 +7,7 @@ import { buttonClasses } from '@/components/ui/Button'
 import { Section } from '@/components/ui/Section'
 import { ServiceIcon } from '@/components/ui/ServiceIcon'
 import { getSiteSettings } from '@/lib/settings'
+import { cn } from '@/lib/utils'
 import { getActiveServices, getHomeStats } from '@/server/queries'
 
 /**
@@ -40,19 +41,20 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
     <>
       {/* ───────────── Hero ───────────── */}
       <section className="grain relative overflow-hidden border-b border-border">
-        {/* แสงนวลจากมุมบนขวา เลียนแบบไฟคีย์ในสตูดิโอ */}
+        {/* แสงนวลจากมุมบนขวา เลียนแบบไฟคีย์ในสตูดิโอ ขยับช้ามากให้ฉากไม่นิ่งสนิท */}
         <div
           aria-hidden
-          className="pointer-events-none absolute -right-1/4 -top-1/2 h-[130%] w-[80%] rounded-full bg-accent/10 blur-[120px]"
+          className="keylight pointer-events-none absolute -right-1/4 -top-1/2 h-[130%] w-[80%] rounded-full bg-accent/10 blur-[120px]"
         />
 
         <div className="container relative grid gap-14 py-20 md:py-28 lg:grid-cols-[1.15fr_1fr] lg:items-center lg:gap-20 lg:py-36">
-          <div className="animate-fade-up">
+          {/* stage ไล่จังหวะให้ลูกทีละชิ้น หัวเรื่องเปิดแบบม่านรูดขึ้นแยกต่างหาก */}
+          <div className="stage">
             <p className="mb-5 text-xs font-medium uppercase tracking-[0.2em] text-accent">
               {isThai ? hero.eyebrowTh : hero.eyebrowEn}
             </p>
 
-            <h1 className="font-display text-display-xl text-balance">
+            <h1 className="sweep font-display text-display-xl text-balance">
               {isThai ? hero.headlineTh : hero.headlineEn}
             </h1>
 
@@ -132,9 +134,15 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
               <li key={service.id} className="bg-background">
                 <Link
                   href={`/services/${service.slug}`}
-                  className="group flex h-full flex-col gap-4 p-8 transition-colors hover:bg-subtle"
+                  className={cn(
+                    'group relative flex h-full flex-col gap-4 p-8 transition-colors hover:bg-subtle',
+                    // เส้นสีเน้นลากผ่านขอบบนตอนชี้ แทนการยกการ์ดขึ้นซึ่งจะทำให้รอยต่อกริดแยกออกจากกัน
+                    'before:absolute before:inset-x-0 before:top-0 before:h-px before:origin-left',
+                    'before:scale-x-0 before:bg-accent before:transition-transform before:duration-300',
+                    'before:ease-out hover:before:scale-x-100',
+                  )}
                 >
-                  <span className="inline-flex h-11 w-11 items-center justify-center rounded-md bg-accent-subtle text-accent">
+                  <span className="inline-flex h-11 w-11 items-center justify-center rounded-md bg-accent-subtle text-accent transition-transform duration-300 ease-out group-hover:-translate-y-0.5 group-hover:scale-105">
                     <ServiceIcon name={service.icon} size={20} strokeWidth={1.6} />
                   </span>
                   <h3 className="font-display text-2xl">

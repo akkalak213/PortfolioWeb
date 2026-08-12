@@ -100,17 +100,18 @@ export default async function ContactPage({
   return (
     <section className="py-16 md:py-24">
       <div className="container">
-        <div className="max-w-2xl">
-          <p className="mb-4 text-xs font-medium uppercase tracking-[0.18em] text-accent">
+        {/* stage ไล่จังหวะให้หัวเรื่องทีละชิ้นเหมือนหน้าแรก หน้านี้คือหน้าที่ลูกค้าตัดสินใจ */}
+        <div className="stage max-w-2xl">
+          <p className="rule-draw mb-4 text-xs font-medium uppercase tracking-[0.18em] text-accent">
             {t('eyebrow')}
           </p>
-          <h1 className="font-display text-display-lg text-balance">{t('title')}</h1>
+          <h1 className="sweep font-display text-display-lg text-balance">{t('title')}</h1>
           <p className="mt-5 text-lg leading-relaxed text-muted-foreground text-pretty">
             {t('subtitle')}
           </p>
         </div>
 
-        <div className="mt-14 grid gap-12 lg:grid-cols-[1.4fr_1fr] lg:gap-20">
+        <div className="reveal-stagger mt-14 grid gap-12 lg:grid-cols-[1.4fr_1fr] lg:gap-20">
           <div className="rounded-lg border border-border bg-surface p-7 md:p-9">
             <h2 className="mb-7 font-display text-2xl">{t('formTitle')}</h2>
             <LeadForm

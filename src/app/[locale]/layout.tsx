@@ -136,6 +136,9 @@ export default async function LocaleLayout({
   return (
     <html lang={locale} suppressHydrationWarning className={fontVariables}>
       <body className="flex min-h-dvh flex-col">
+        {/* แถบบอกความคืบหน้าการอ่าน ผูกกับ scroll timeline ของ CSS ไม่มี JavaScript */}
+        <div aria-hidden className="scroll-progress no-print" />
+
         <NextIntlClientProvider>
           <Providers>
             <a

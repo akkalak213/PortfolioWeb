@@ -221,6 +221,115 @@
   }
 
   /**
+   * แถบบอกความคืบหน้าการอ่าน พาดบนสุดของจอ
+   *
+   * ผูกกับ scroll timeline ของเอกสารโดยตรง ไม่มี scroll listener ไม่มี state
+   * เบราว์เซอร์ที่ไม่รองรับจะไม่เห็นแถบเลย ซึ่งดีกว่าเห็นแถบที่ไม่ขยับ
+   */
+  .scroll-progress {
+    position: fixed;
+    inset: 0 0 auto;
+    z-index: 60;
+    height: 2px;
+    transform: scaleX(0);
+    transform-origin: 0 50%;
+    background: linear-gradient(to right, hsl(var(--accent)), hsl(var(--accent) / 0.55));
+    display: none;
+  }
+  @supports (animation-timeline: scroll()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .scroll-progress {
+        display: block;
+        animation: scroll-progress linear both;
+        animation-timeline: scroll(root block);
+      }
+    }
+  }
+
+  /**
+   * จังหวะเข้าฉากของ hero — ไล่ทีละชิ้นแทนที่จะโผล่มาพร้อมกันทั้งก้อน
+   *
+   * ใช้ animation-delay ได้เพราะเป็นจังหวะตามเวลา ไม่ได้ผูกกับการเลื่อน
+   * ขยับแค่ transform กับ opacity ทั้งคู่รันบน compositor ไม่ทำให้ layout ขยับ
+   * ค่า CLS จึงไม่เสียแม้จะอยู่เหนือ fold
+   */
+  .stage > * {
+    animation: rise-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .stage > *:nth-child(1) {
+    animation-delay: 0.04s;
+  }
+  .stage > *:nth-child(2) {
+    animation-delay: 0.12s;
+  }
+  .stage > *:nth-child(3) {
+    animation-delay: 0.24s;
+  }
+  .stage > *:nth-child(4) {
+    animation-delay: 0.34s;
+  }
+  .stage > *:nth-child(5) {
+    animation-delay: 0.44s;
+  }
+
+  /**
+   * หัวเรื่องเปิดตัวแบบม่านรูดขึ้น เหมือนเปิดฉากงานภาพ
+   *
+   * ใช้ clip-path แทนการแยกข้อความเป็นคำ ๆ เพราะภาษาไทยไม่มีช่องว่างระหว่างคำ
+   * วิธีแยกคำที่ใช้กับภาษาอังกฤษได้จึงใช้กับหน้าไทยไม่ได้เลย
+   */
+  .sweep {
+    animation: sweep-in 0.95s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: 0.1s;
+  }
+
+  /**
+   * ไฟคีย์ในฉากค่อย ๆ หายใจ ช้ามากจนไม่ดึงสายตาไปจากข้อความ
+   * เป็นชั้นที่เบลออยู่แล้ว เบราว์เซอร์จึงแยกเป็น layer ต่างหากและขยับด้วย GPU
+   */
+  .keylight {
+    /*
+     * ไม่ใส่ will-change ไว้ถาวร เพราะจะบังคับให้เบราว์เซอร์กันหน่วยความจำ GPU
+     * ให้ชั้นที่เบลอ 120px ทั้งใบไว้ตลอดอายุหน้า ตัว animation ยกเป็น layer ให้เองอยู่แล้ว
+     *
+     * เปิดเฉพาะจอใหญ่ บนมือถือชั้นเบลอขนาดนี้แพงเกินกว่าที่จะแลกกับความเคลื่อนไหวที่แทบไม่เห็น
+     */
+    animation: none;
+  }
+  @media (min-width: 768px) and (prefers-reduced-motion: no-preference) {
+    .keylight {
+      animation: keylight 26s ease-in-out infinite alternate;
+    }
+  }
+
+  /**
+   * เส้นใต้หัวข้อลากตัวเองตอนเลื่อนถึง
+   *
+   * ค่าตั้งต้นคือเส้นเต็มที่มองเห็นได้ แล้วค่อยหุบเหลือศูนย์เฉพาะตอนที่จะมีแอนิเมชันมาลากมันออก
+   * ถ้าทำกลับกัน เบราว์เซอร์ที่รองรับ view() แต่ผู้ใช้ปิดแอนิเมชันไว้จะไม่เข้าทั้งสองเงื่อนไข
+   * แล้วเส้นจะหุบอยู่อย่างนั้นถาวร
+   */
+  .rule-draw::after {
+    content: '';
+    display: block;
+    height: 1px;
+    width: 2.5rem;
+    margin-top: 0.75rem;
+    background: hsl(var(--accent));
+    transform-origin: 0 50%;
+  }
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .rule-draw::after {
+        transform: scaleX(0);
+        animation: rule-draw linear both;
+        animation-timeline: view();
+        animation-range: entry 10% cover 30%;
+      }
+    }
+  }
+
+  /**
    * เนื้อหาค่อย ๆ ปรากฏตอนเลื่อนถึง — ทำด้วย CSS scroll-driven ล้วน ไม่มี JavaScript
    *
    * ต่างจากวิธีเดิมที่ต้องใช้ IntersectionObserver แล้วสั่ง setState ทุกครั้งที่เลื่อน
@@ -298,11 +407,62 @@
 @keyframes reveal-in {
   from {
     opacity: 0;
-    transform: translateY(14px);
+    /* ถอยหลังเล็กน้อยด้วย ไม่ใช่แค่เลื่อนขึ้น ทำให้รู้สึกว่ามีระยะ ไม่ใช่กระดาษแบน */
+    transform: translate3d(0, 18px, 0) scale(0.985);
   }
   to {
     opacity: 1;
     transform: none;
+  }
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 16px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ม่านรูดขึ้นจากล่าง เผยข้อความทีละส่วน */
+@keyframes sweep-in {
+  from {
+    opacity: 0;
+    clip-path: inset(0 0 100% 0);
+    transform: translate3d(0, 10px, 0);
+  }
+  to {
+    opacity: 1;
+    /* เลย 0 ไปนิดเพื่อกันไม่ให้ตัดหางสระล่างของภาษาไทย */
+    clip-path: inset(0 0 -15% 0);
+    transform: none;
+  }
+}
+
+@keyframes scroll-progress {
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes rule-draw {
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* ไฟคีย์ขยับช้ามาก ระยะแค่ไม่กี่เปอร์เซ็นต์ ให้รู้สึกว่าฉากมีชีวิตเฉย ๆ */
+@keyframes keylight {
+  from {
+    opacity: 0.75;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(-3%, 4%, 0) scale(1.08);
   }
 }
 
@@ -316,6 +476,14 @@
   *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
+    /*
+     * ต้องล้าง delay ด้วย ไม่ใช่แค่ duration
+     *
+     * จังหวะเข้าฉากของ hero ไล่ delay ไปถึง 0.44 วินาที และใช้ fill both
+     * ถ้าเหลือ delay ไว้ คนที่ปิดแอนิเมชันจะเห็นหน้าว่างเปล่าเกือบครึ่งวินาทีก่อนข้อความโผล่
+     * ซึ่งแย่กว่าการเห็นแอนิเมชันเสียอีก
+     */
+    animation-delay: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
 }

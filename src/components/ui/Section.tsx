@@ -46,7 +46,13 @@ export function Section({
           >
             <div className={cn('max-w-2xl', align === 'center' && 'mx-auto')}>
               {eyebrow && (
-                <p className="mb-3 text-xs font-medium uppercase tracking-[0.18em] text-accent">
+                <p
+                  className={cn(
+                    // rule-draw ต่อเส้นสั้น ๆ ใต้ eyebrow แล้วลากออกตอนเลื่อนถึง
+                    'rule-draw mb-4 text-xs font-medium uppercase tracking-[0.18em] text-accent',
+                    align === 'center' && 'after:mx-auto',
+                  )}
+                >
                   {eyebrow}
                 </p>
               )}
