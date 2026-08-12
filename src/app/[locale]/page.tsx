@@ -1,4 +1,4 @@
-import { ArrowRight, ArrowUpRight, Star } from 'lucide-react'
+import { ArrowRight, ArrowUpRight, Lightbulb, PackageOpen, SlidersHorizontal, Star } from 'lucide-react'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
 import type { Locale } from '@/i18n/routing'
@@ -6,9 +6,18 @@ import { Badge } from '@/components/ui/Badge'
 import { buttonClasses } from '@/components/ui/Button'
 import { Section } from '@/components/ui/Section'
 import { ServiceIcon } from '@/components/ui/ServiceIcon'
+import { EquipmentIcon } from '@/components/ui/EquipmentIcon'
+import { ProjectCard } from '@/components/work/ProjectCard'
+import { ReviewCard } from '@/components/reviews/ReviewCard'
 import { getSiteSettings } from '@/lib/settings'
 import { cn } from '@/lib/utils'
-import { getActiveServices, getHomeStats } from '@/server/queries'
+import {
+  getActiveServices,
+  getApprovedReviews,
+  getEquipment,
+  getFeaturedProjects,
+  getHomeStats,
+} from '@/server/queries'
 
 /**
  * สร้างหน้าใหม่อัตโนมัติทุก 10 นาที
@@ -26,16 +35,45 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
   const { locale } = await params
   setRequestLocale(locale)
 
-  const [t, tc, settings, services, stats] = await Promise.all([
-    getTranslations('home'),
-    getTranslations('common'),
-    getSiteSettings(),
-    getActiveServices(),
-    getHomeStats(),
-  ])
+  const [t, tc, tEquip, settings, services, stats, equipment, featured, reviews] =
+    await Promise.all([
+      getTranslations('home'),
+      getTranslations('common'),
+      getTranslations('equipmentCategory'),
+      getSiteSettings(),
+      getActiveServices(),
+      getHomeStats(),
+      getEquipment(),
+      getFeaturedProjects(3),
+      getApprovedReviews(3),
+    ])
 
   const isThai = locale === 'th'
   const { hero } = settings
+
+  /**
+   * จัดอุปกรณ์เข้าหมวดจากข้อมูลจริงในคลัง ไม่ได้เขียนรายการไว้ตายตัว
+   * เพิ่มหรือลดของในหลังบ้านเมื่อไหร่ หน้าแรกก็เปลี่ยนตามเอง
+   */
+  const gearByCategory = equipment.reduce<
+    Record<string, { count: number; models: string[] }>
+  >((acc, item) => {
+    const group = (acc[item.category] ??= { count: 0, models: [] })
+    group.count += 1
+    if (group.models.length < 2) group.models.push(`${item.brand} ${item.model}`)
+    return acc
+  }, {})
+
+  const gearGroups = Object.entries(gearByCategory).sort((a, b) => b[1].count - a[1].count)
+
+  // ชื่อรุ่นทั้งหมดสำหรับแถบเลื่อน ทำซ้ำสองชุดเพื่อให้วนแล้วไม่เห็นรอยต่อ
+  const gearNames = equipment.map((item) => `${item.brand} ${item.model}`)
+
+  const studioPoints = [
+    { icon: PackageOpen, title: t('studioPointGearTitle'), text: t('studioPointGearText') },
+    { icon: Lightbulb, title: t('studioPointLightTitle'), text: t('studioPointLightText') },
+    { icon: SlidersHorizontal, title: t('studioPointRentTitle'), text: t('studioPointRentText') },
+  ]
 
   return (
     <>
@@ -166,6 +204,153 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
           </ul>
         )}
       </Section>
+
+      {/* ───────────── ในสตูดิโอ ───────────── */}
+      {/* border-y เพื่อให้ยังเห็นรอยต่อในโหมดมืด ที่พื้นหน้ากับพื้นแผงต่างกันแค่ไม่กี่เปอร์เซ็นต์ */}
+      {equipment.length > 0 && (
+        <section className="studio-panel relative overflow-hidden border-y border-border">
+          <div className="container relative py-20 md:py-28">
+            <div className="grid gap-14 lg:grid-cols-[1fr_1.05fr] lg:gap-20">
+              <div className="reveal">
+                <p className="rule-draw mb-4 text-xs font-medium uppercase tracking-[0.18em] text-accent">
+                  {t('studioEyebrow')}
+                </p>
+                <h2 className="font-display text-display-md text-balance">{t('studioTitle')}</h2>
+                <p className="mt-5 text-lg leading-relaxed text-muted-foreground text-pretty">
+                  {t('studioSubtitle')}
+                </p>
+
+                <ul className="mt-10 space-y-6">
+                  {studioPoints.map(({ icon: Icon, title, text }) => (
+                    <li key={title} className="flex gap-4">
+                      <span className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-accent-subtle text-accent">
+                        <Icon size={17} strokeWidth={1.75} aria-hidden />
+                      </span>
+                      <div>
+                        <p className="font-medium">{title}</p>
+                        <p className="mt-1 text-sm leading-relaxed text-muted-foreground text-pretty">
+                          {text}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+
+                <dl className="mt-10 flex gap-10 border-t border-border pt-8">
+                  <div>
+                    <dt className="text-xs text-muted-foreground">{t('studioStatGear')}</dt>
+                    <dd className="tabular mt-1 font-display text-3xl">{equipment.length}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs text-muted-foreground">{t('studioStatCategories')}</dt>
+                    <dd className="tabular mt-1 font-display text-3xl">{gearGroups.length}</dd>
+                  </div>
+                </dl>
+
+                <Link href="/rental" className={buttonClasses('accent', 'lg', 'mt-9')}>
+                  {t('studioCta')}
+                  <ArrowRight size={18} strokeWidth={1.75} aria-hidden />
+                </Link>
+              </div>
+
+              {/* หมวดอุปกรณ์พร้อมจำนวนและตัวอย่างรุ่น อ่านจากคลังจริง */}
+              <ul
+                className={cn(
+                  'reveal-stagger grid gap-px self-start overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-2',
+                  // จำนวนหมวดเป็นเลขคี่ได้ ถ้าปล่อยไว้ช่องที่เหลือจะกลายเป็นบล็อกสีขอบทึบ ๆ
+                  // ให้ใบสุดท้ายกินสองคอลัมน์แทน กริดจึงเต็มเสมอไม่ว่าจะมีกี่หมวด
+                  'sm:[&>li:last-child:nth-child(odd)]:col-span-2',
+                )}
+              >
+                {gearGroups.map(([category, group]) => (
+                  <li key={category} className="bg-background p-6">
+                    <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-accent-subtle text-accent">
+                      <EquipmentIcon
+                        category={category as Parameters<typeof EquipmentIcon>[0]['category']}
+                        size={19}
+                        strokeWidth={1.6}
+                        aria-hidden
+                      />
+                    </span>
+                    <p className="mt-4 font-medium">{tEquip(category)}</p>
+                    <p className="tabular mt-1 text-xs text-muted-foreground">
+                      {group.count} {t('studioItemsUnit')}
+                    </p>
+                    <p className="mt-3 text-sm leading-relaxed text-muted-foreground text-pretty">
+                      {group.models.join(' · ')}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          {/* แถบชื่อรุ่นอุปกรณ์เลื่อนช้า ๆ ให้เห็นว่าคลังลึกแค่ไหนโดยไม่ต้องลิสต์ทั้งหมด */}
+          <div
+            aria-hidden
+            className="fade-edges-x relative overflow-hidden border-t border-border py-5"
+          >
+            <div className="marquee-track">
+              {[0, 1].map((copy) => (
+                <ul key={copy} className="flex shrink-0 items-center">
+                  {gearNames.map((name) => (
+                    <li
+                      key={name}
+                      className="flex items-center gap-6 whitespace-nowrap px-6 font-mono text-xs uppercase tracking-[0.16em] text-muted-foreground"
+                    >
+                      {name}
+                      <span className="h-1 w-1 rounded-full bg-accent/60" />
+                    </li>
+                  ))}
+                </ul>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ───────────── ผลงานเด่น ───────────── */}
+      {featured.length > 0 && (
+        <Section
+          eyebrow={t('workEyebrow')}
+          title={t('workTitle')}
+          subtitle={t('workSubtitle')}
+          action={
+            <Link href="/work" className={buttonClasses('outline', 'md')}>
+              {t('workCta')}
+            </Link>
+          }
+        >
+          <div className="reveal-stagger grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
+            {featured.map((project) => (
+              <ProjectCard key={project.id} project={project} locale={locale} />
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {/* ───────────── เสียงจากลูกค้า ───────────── */}
+      {reviews.length > 0 && (
+        <Section
+          tone="subtle"
+          eyebrow={t('reviewsEyebrow')}
+          title={t('reviewsTitle')}
+          subtitle={t('reviewsSubtitle')}
+          action={
+            <Link href="/reviews" className={buttonClasses('outline', 'md')}>
+              {t('reviewsCta')}
+            </Link>
+          }
+        >
+          <ul className="reveal-stagger grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {reviews.map((review) => (
+              <li key={review.id}>
+                <ReviewCard review={review} locale={locale} />
+              </li>
+            ))}
+          </ul>
+        </Section>
+      )}
 
       {/* ───────────── CTA ───────────── */}
       <section className="border-t border-border py-20 md:py-28">
