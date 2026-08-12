@@ -19,15 +19,17 @@ import { breadcrumbSchema, creativeWorkSchema } from '@/lib/structured-data'
 import { getProjectBySlug, getRelatedProjects } from '@/server/queries'
 
 /**
- * สร้างหน้าใหม่อัตโนมัติทุก 10 นาที
+ * เรนเดอร์ตอนมีคนขอ ไม่ prerender ตอน build
  *
  * ตอน build บน Railway ยังต่อฐานข้อมูลไม่ได้ (private network เปิดหลัง deploy)
- * หน้าจึงถูก prerender ด้วยข้อมูลเปล่า ISR ทำให้มันรีเฟรชตัวเองหลังขึ้นระบบ
- * โดยไม่ต้องผูก build เข้ากับฐานข้อมูล
+ * เดิมใช้ ISR โดยหวังว่าหน้าจะรีเฟรชตัวเองหลังขึ้นระบบ แต่ผลจริงคือ
+ * หน้าที่ prerender ด้วยข้อมูลเปล่าถูกแคชไว้และเสิร์ฟไปอีกสิบนาทีเต็มหลัง deploy ทุกครั้ง
+ * ส่วนที่ผูกกับข้อมูลจึงหายไปทั้งก้อนในช่วงนั้น
  *
- * การแก้เนื้อหาจากหน้า /admin ยังสั่ง revalidate ทันทีอยู่แล้ว ไม่ต้องรอรอบนี้
+ * ฐานข้อมูลอยู่บน private network แล้ว วัดได้ 165ms จากเดิม 859ms
+ * การอ่านสดทุกครั้งจึงถูกกว่าการเสี่ยงเสิร์ฟหน้าเปล่า
  */
-export const revalidate = 600
+export const dynamic = 'force-dynamic'
 
 
 type Credit = { role: string; name: string }

@@ -251,6 +251,54 @@
   }
 
   /**
+   * ฉากสตูดิโอมีชีวิต — ไฟหายใจ ฝุ่นลอย ไฟกล้องกะพริบ
+   *
+   * ทุกตัวคาบเวลาไม่เท่ากันและเป็นจำนวนเฉพาะคนละค่า จังหวะจึงไม่มาตรงกันซ้ำ ๆ
+   * ถ้าใช้คาบเท่ากันหมด สายตาจะจับได้ว่าเป็นลูป แล้วเสน่ห์หายทันที
+   */
+  @media (prefers-reduced-motion: no-preference) {
+    .beam-key {
+      animation: beam-breathe 7s ease-in-out infinite alternate;
+    }
+    .beam-fill {
+      animation: beam-breathe 11s ease-in-out infinite alternate;
+      animation-delay: -3s;
+    }
+    .lamp-key {
+      animation: lamp-glow 7s ease-in-out infinite alternate;
+    }
+    .lamp-fill {
+      animation: lamp-glow 11s ease-in-out infinite alternate;
+      animation-delay: -3s;
+    }
+    .rec-dot {
+      animation: rec-blink 3.5s steps(1, end) infinite;
+    }
+    .mote {
+      animation: mote-drift linear infinite;
+    }
+    .mote-1 {
+      animation-duration: 13s;
+    }
+    .mote-2 {
+      animation-duration: 17s;
+      animation-delay: -6s;
+    }
+    .mote-3 {
+      animation-duration: 19s;
+      animation-delay: -11s;
+    }
+    .mote-4 {
+      animation-duration: 23s;
+      animation-delay: -4s;
+    }
+    .mote-5 {
+      animation-duration: 29s;
+      animation-delay: -15s;
+    }
+  }
+
+  /**
    * แถบชื่ออุปกรณ์เลื่อนช้า ๆ — ทำซ้ำเนื้อหาสองชุดแล้วเลื่อนไปครึ่งหนึ่ง
    * พอถึงครึ่งทางภาพที่เห็นจะเหมือนจุดเริ่มพอดี รอยต่อจึงไม่มีให้เห็น
    */
@@ -492,6 +540,53 @@
     /* เลย 0 ไปนิดเพื่อกันไม่ให้ตัดหางสระล่างของภาษาไทย */
     clip-path: inset(0 0 -15% 0);
     transform: none;
+  }
+}
+
+/* ลำแสงเข้มขึ้นและกว้างขึ้นทีละนิด เหมือนไฟที่กำลังทำงานอยู่จริง */
+@keyframes beam-breathe {
+  from {
+    opacity: 0.65;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes lamp-glow {
+  from {
+    opacity: 0.82;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* steps ทำให้ไฟติดดับเป็นจังหวะชัด ไม่ใช่ค่อย ๆ จาง */
+@keyframes rec-blink {
+  0%,
+  46% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0.15;
+  }
+}
+
+/* ฝุ่นลอยขึ้นแล้วเริ่มใหม่ ระยะสั้น ๆ พอให้รู้สึกว่าอากาศไม่นิ่ง */
+@keyframes mote-drift {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0);
+  }
+  18%,
+  76% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(-14px, -76px, 0);
   }
 }
 

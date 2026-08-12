@@ -7,6 +7,7 @@ import { buttonClasses } from '@/components/ui/Button'
 import { Section } from '@/components/ui/Section'
 import { ServiceIcon } from '@/components/ui/ServiceIcon'
 import { EquipmentIcon } from '@/components/ui/EquipmentIcon'
+import { StudioScene } from '@/components/home/StudioScene'
 import { ProjectCard } from '@/components/work/ProjectCard'
 import { ReviewCard } from '@/components/reviews/ReviewCard'
 import { getSiteSettings } from '@/lib/settings'
@@ -20,15 +21,17 @@ import {
 } from '@/server/queries'
 
 /**
- * สร้างหน้าใหม่อัตโนมัติทุก 10 นาที
+ * เรนเดอร์ตอนมีคนขอ ไม่ prerender ตอน build
  *
  * ตอน build บน Railway ยังต่อฐานข้อมูลไม่ได้ (private network เปิดหลัง deploy)
- * หน้าจึงถูก prerender ด้วยข้อมูลเปล่า ISR ทำให้มันรีเฟรชตัวเองหลังขึ้นระบบ
- * โดยไม่ต้องผูก build เข้ากับฐานข้อมูล
+ * เดิมใช้ ISR โดยหวังว่าหน้าจะรีเฟรชตัวเองหลังขึ้นระบบ แต่ผลจริงคือ
+ * หน้าที่ prerender ด้วยข้อมูลเปล่าถูกแคชไว้และเสิร์ฟไปอีกสิบนาทีเต็มหลัง deploy ทุกครั้ง
+ * ส่วนที่ผูกกับข้อมูลจึงหายไปทั้งก้อนในช่วงนั้น
  *
- * การแก้เนื้อหาจากหน้า /admin ยังสั่ง revalidate ทันทีอยู่แล้ว ไม่ต้องรอรอบนี้
+ * ฐานข้อมูลอยู่บน private network แล้ว วัดได้ 165ms จากเดิม 859ms
+ * การอ่านสดทุกครั้งจึงถูกกว่าการเสี่ยงเสิร์ฟหน้าเปล่า
  */
-export const revalidate = 600
+export const dynamic = 'force-dynamic'
 
 
 export default async function HomePage({ params }: { params: Promise<{ locale: Locale }> }) {
@@ -206,12 +209,17 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
       </Section>
 
       {/* ───────────── ในสตูดิโอ ───────────── */}
-      {/* border-y เพื่อให้ยังเห็นรอยต่อในโหมดมืด ที่พื้นหน้ากับพื้นแผงต่างกันแค่ไม่กี่เปอร์เซ็นต์ */}
-      {equipment.length > 0 && (
-        <section className="studio-panel relative overflow-hidden border-y border-border">
-          <div className="container relative py-20 md:py-28">
-            <div className="grid gap-14 lg:grid-cols-[1fr_1.05fr] lg:gap-20">
-              <div className="reveal">
+      {/*
+        border-y เพื่อให้ยังเห็นรอยต่อในโหมดมืด ที่พื้นหน้ากับพื้นแผงต่างกันแค่ไม่กี่เปอร์เซ็นต์
+
+        ส่วนนี้ไม่ผูกกับข้อมูลในฐานข้อมูล ภาพฉากกับคำอธิบายขึ้นเสมอ
+        มีแต่รายการหมวดอุปกรณ์ที่ซ่อนเมื่อคลังว่าง ตอนแรกครอบเงื่อนไขไว้ทั้งก้อน
+        พอ build บน Railway ต่อฐานข้อมูลไม่ได้ ทั้งส่วนเลยหายไปจากหน้าจริงทั้งดุ้น
+      */}
+      <section className="studio-panel relative overflow-hidden border-y border-border">
+        <div className="container relative py-20 md:py-28">
+          <div className="grid gap-14 lg:grid-cols-[1fr_1.05fr] lg:gap-20">
+            <div className="reveal">
                 <p className="rule-draw mb-4 text-xs font-medium uppercase tracking-[0.18em] text-accent">
                   {t('studioEyebrow')}
                 </p>
@@ -251,41 +259,53 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
                   {t('studioCta')}
                   <ArrowRight size={18} strokeWidth={1.75} aria-hidden />
                 </Link>
-              </div>
+            </div>
 
-              {/* หมวดอุปกรณ์พร้อมจำนวนและตัวอย่างรุ่น อ่านจากคลังจริง */}
-              <ul
-                className={cn(
-                  'reveal-stagger grid gap-px self-start overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-2',
-                  // จำนวนหมวดเป็นเลขคี่ได้ ถ้าปล่อยไว้ช่องที่เหลือจะกลายเป็นบล็อกสีขอบทึบ ๆ
-                  // ให้ใบสุดท้ายกินสองคอลัมน์แทน กริดจึงเต็มเสมอไม่ว่าจะมีกี่หมวด
-                  'sm:[&>li:last-child:nth-child(odd)]:col-span-2',
-                )}
-              >
-                {gearGroups.map(([category, group]) => (
-                  <li key={category} className="bg-background p-6">
-                    <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-accent-subtle text-accent">
-                      <EquipmentIcon
-                        category={category as Parameters<typeof EquipmentIcon>[0]['category']}
-                        size={19}
-                        strokeWidth={1.6}
-                        aria-hidden
-                      />
-                    </span>
-                    <p className="mt-4 font-medium">{tEquip(category)}</p>
-                    <p className="tabular mt-1 text-xs text-muted-foreground">
-                      {group.count} {t('studioItemsUnit')}
-                    </p>
-                    <p className="mt-3 text-sm leading-relaxed text-muted-foreground text-pretty">
-                      {group.models.join(' · ')}
-                    </p>
-                  </li>
-                ))}
-              </ul>
+            {/* ฉากสตูดิโอ วาดด้วย SVG ในโค้ด ไฟหายใจ ฝุ่นลอย ไฟกล้องกะพริบ */}
+            <div className="reveal self-center">
+              <StudioScene className="w-full" />
             </div>
           </div>
 
-          {/* แถบชื่อรุ่นอุปกรณ์เลื่อนช้า ๆ ให้เห็นว่าคลังลึกแค่ไหนโดยไม่ต้องลิสต์ทั้งหมด */}
+          {/* หมวดอุปกรณ์พร้อมจำนวนและตัวอย่างรุ่น อ่านจากคลังจริง */}
+          {gearGroups.length > 0 && (
+            <ul
+              className={cn(
+                'reveal-stagger mt-16 grid gap-px overflow-hidden rounded-lg border border-border bg-border',
+                'sm:grid-cols-2 lg:grid-cols-4',
+                // จำนวนหมวดหารไม่ลงตัวได้ ช่องที่เหลือจะกลายเป็นบล็อกสีขอบทึบ ๆ
+                // ให้ใบสุดท้ายยืดกินช่องที่เหลือ กริดจึงเต็มเสมอไม่ว่าจะมีกี่หมวด
+                'sm:[&>li:last-child:nth-child(odd)]:col-span-2',
+                'lg:[&>li:last-child:nth-child(4n+1)]:col-span-4',
+                'lg:[&>li:last-child:nth-child(4n+2)]:col-span-3',
+                'lg:[&>li:last-child:nth-child(4n+3)]:col-span-2',
+              )}
+            >
+              {gearGroups.map(([category, group]) => (
+                <li key={category} className="bg-background p-6">
+                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-accent-subtle text-accent">
+                    <EquipmentIcon
+                      category={category as Parameters<typeof EquipmentIcon>[0]['category']}
+                      size={19}
+                      strokeWidth={1.6}
+                      aria-hidden
+                    />
+                  </span>
+                  <p className="mt-4 font-medium">{tEquip(category)}</p>
+                  <p className="tabular mt-1 text-xs text-muted-foreground">
+                    {group.count} {t('studioItemsUnit')}
+                  </p>
+                  <p className="mt-3 text-sm leading-relaxed text-muted-foreground text-pretty">
+                    {group.models.join(' · ')}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        {/* แถบชื่อรุ่นอุปกรณ์เลื่อนช้า ๆ ให้เห็นว่าคลังลึกแค่ไหนโดยไม่ต้องลิสต์ทั้งหมด */}
+        {gearNames.length > 0 && (
           <div
             aria-hidden
             className="fade-edges-x relative overflow-hidden border-t border-border py-5"
@@ -306,8 +326,8 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
               ))}
             </div>
           </div>
-        </section>
-      )}
+        )}
+      </section>
 
       {/* ───────────── ผลงานเด่น ───────────── */}
       {featured.length > 0 && (
