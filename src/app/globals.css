@@ -322,7 +322,7 @@
      */
     .shutter-arm {
       transform-box: view-box;
-      transform-origin: 294px 162px;
+      transform-origin: 314px 161px;
       animation: shutter-press 7s ease-in-out infinite;
     }
     .flash-pop {
