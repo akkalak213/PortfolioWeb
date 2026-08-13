@@ -304,6 +304,34 @@
       animation: beam-breathe 13s ease-in-out infinite alternate;
       animation-delay: -7s;
     }
+    .beam-boom {
+      animation: beam-breathe 9s ease-in-out infinite alternate;
+      animation-delay: -4s;
+    }
+    .lamp-boom {
+      animation: lamp-glow 9s ease-in-out infinite alternate;
+      animation-delay: -4s;
+    }
+
+    /**
+     * ช่างภาพกดชัตเตอร์แล้วแฟลชยิง ทุกอย่างอยู่บนคาบ 7 วินาทีเดียวกัน
+     * แขนกดลงก่อนที่ 11% แล้วแฟลชยิงที่ 13% ตามลำดับจริงของการถ่าย
+     *
+     * แขนหมุนรอบหัวไหล่ ไม่ใช่เลื่อนทั้งชิ้น จุดหมุนจึงตั้งไว้ที่พิกัดหัวไหล่ใน viewBox
+     * ต้องมี transform-box: view-box ไม่งั้น transform-origin จะอ้างอิงกรอบของเส้นเอง
+     */
+    .shutter-arm {
+      transform-box: view-box;
+      transform-origin: 294px 162px;
+      animation: shutter-press 7s ease-in-out infinite;
+    }
+    .flash-pop {
+      opacity: 0;
+      animation: flash-pop 7s linear infinite;
+    }
+    .flash-tube {
+      animation: flash-tube 7s linear infinite;
+    }
   }
 
   /**
@@ -595,6 +623,55 @@
   100% {
     opacity: 0;
     transform: translate3d(-14px, -76px, 0);
+  }
+}
+
+/* นิ้วกดลงบนปุ่มชัตเตอร์แล้วยกกลับ ค้างไว้แป๊บหนึ่งเหมือนกดจริง */
+@keyframes shutter-press {
+  0%,
+  10% {
+    transform: rotate(0deg);
+  }
+  12%,
+  15% {
+    transform: rotate(3.4deg);
+  }
+  19%,
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+/* แฟลชยิงหลังนิ้วกดลงสุด สว่างวาบเดียวราวหนึ่งร้อยมิลลิวินาทีเท่าแฟลชจริง */
+@keyframes flash-pop {
+  0%,
+  12.4% {
+    opacity: 0;
+  }
+  12.8% {
+    opacity: 1;
+  }
+  14.4% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes flash-tube {
+  0%,
+  12.4% {
+    opacity: 0.55;
+  }
+  12.8% {
+    opacity: 1;
+  }
+  15.5% {
+    opacity: 0.55;
+  }
+  100% {
+    opacity: 0.55;
   }
 }
 
