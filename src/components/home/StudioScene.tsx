@@ -205,6 +205,12 @@ export function StudioScene({ className }: { className?: string }) {
           <stop offset="0%" stopColor="#fff4e2" stopOpacity="0.5" />
           <stop offset="100%" stopColor="#fff4e2" stopOpacity="0" />
         </radialGradient>
+        {/* แสงแฟลชที่สาดไปทั่วห้อง จุดกำเนิดอยู่ที่หัวแฟลชแล้วจางลงตามระยะ */}
+        <radialGradient id="ss-room" gradientUnits="userSpaceOnUse" cx={FLASH.dome[0]} cy={FLASH.dome[1]} r="900">
+          <stop offset="0%" stopColor="#fff4e2" stopOpacity="0.16" />
+          <stop offset="45%" stopColor="#fff4e2" stopOpacity="0.05" />
+          <stop offset="100%" stopColor="#fff4e2" stopOpacity="0" />
+        </radialGradient>
 
         <filter id="ss-soft" x="-25%" y="-25%" width="150%" height="150%">
           <feGaussianBlur stdDeviation="8" />
@@ -287,7 +293,7 @@ export function StudioScene({ className }: { className?: string }) {
         <path d={poly([[388, 148], [398, 146], [398, 170], [388, 168]])} fill="hsl(var(--accent) / 0.16)" />
       </g>
       <path d="M 371 151 V 165 M 381 151 V 165" stroke="hsl(var(--foreground) / 0.55)" strokeWidth="1.8" strokeLinecap="round" />
-      <circle cx="361" cy="144" r="2.2" fill="hsl(0 63% 43%)" />
+      <circle className="rec-dot" cx="361" cy="144" r="2.2" fill="hsl(0 63% 43%)" />
       <circle cx="367" cy="148" r="2.6" fill="hsl(var(--foreground) / 0.9)" />
 
       {/*
@@ -346,10 +352,16 @@ export function StudioScene({ className }: { className?: string }) {
         <path d={`M 830 58 L ${BOOM_X} 104 L 1076 122`} strokeWidth="3" />
         <circle cx={BOOM_X} cy="104" r="7" fill="hsl(var(--muted-foreground) / 0.5)" strokeWidth="2" />
         <path d={poly([[1064, 113], [1088, 113], [1088, 133], [1064, 133]])} fill="hsl(var(--muted-foreground) / 0.5)" />
+      </g>
+      {/*
+        โคมบูมแกว่งช้ามากรอบจุดแขวน แขนบูมยาวเมตรกว่า ของจริงไม่มีทางนิ่งสนิท
+        แกว่งแค่ 0.5 องศาก็พอ มากกว่านี้จะกลายเป็นของที่กำลังจะหล่น
+      */}
+      <g className="boom-swing" stroke="hsl(var(--muted-foreground))" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M 830 58 V 48 M 812 48 H 848" />
         <path d={poly([[772, 56], [892, 56], [900, 84], [764, 84]])} fill="hsl(var(--accent) / 0.07)" />
+        <path d={poly([[764, 84], [900, 84], [898, 92], [766, 92]])} fill="hsl(var(--accent) / 0.8)" stroke="hsl(var(--accent))" strokeWidth="2" />
       </g>
-      <path d={poly([[764, 84], [900, 84], [898, 92], [766, 92]])} fill="hsl(var(--accent) / 0.8)" stroke="hsl(var(--accent))" strokeWidth="2" strokeLinejoin="round" />
 
       {/* ─── แผ่นสะท้อนแสง ─── */}
       <path d={standOf(REF_X, REF_TOP)} stroke="hsl(var(--muted-foreground))" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -366,6 +378,12 @@ export function StudioScene({ className }: { className?: string }) {
 
       {/* ─── เส้นพื้น จางหายที่ขอบทั้งสองข้าง ─── */}
       <rect x="0" y={GROUND} width="1440" height="1.5" fill="url(#ss-edge-fade)" />
+
+      {/*
+        แฟลชสว่างไปทั้งห้องหนึ่งจังหวะ วางไว้บนสุดเพราะแสงตกลงบนทุกอย่างในฉาก
+        หัวแฟลชเงยขึ้นจึงเป็นการยิงสะท้อน แสงกระจายทั่วห้องแทนที่จะพุ่งเป็นลำเดียว
+      */}
+      <rect className="flash-room" x="0" y="0" width="1440" height="320" fill="url(#ss-room)" />
 
       {/* ─── ฝุ่นลอยในลำแสง ─── */}
       <g fill="hsl(var(--accent))">

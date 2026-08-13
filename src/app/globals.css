@@ -314,8 +314,19 @@
     }
 
     /**
-     * ช่างภาพกดชัตเตอร์แล้วแฟลชยิง ทุกอย่างอยู่บนคาบ 7 วินาทีเดียวกัน
-     * แขนกดลงก่อนที่ 11% แล้วแฟลชยิงที่ 13% ตามลำดับจริงของการถ่าย
+     * โคมบูมแกว่งช้ามากรอบจุดแขวน แขนบูมยาวเมตรกว่า ของจริงไม่มีทางนิ่งสนิท
+     * คาบ 17 วินาทีซึ่งไม่ตรงกับคาบไหนเลยในฉาก จังหวะจึงไม่มาซ้อนกันเป็นลูปที่จับได้
+     */
+    .boom-swing {
+      transform-box: view-box;
+      transform-origin: 830px 48px;
+      animation: boom-swing 17s ease-in-out infinite alternate;
+    }
+
+    /**
+     * ช่างภาพกดชัตเตอร์แล้วแฟลชยิง ทุกอย่างอยู่บนคาบ 9 วินาทีเดียวกัน
+     * แขนกดลงก่อนที่ 11% แล้วแฟลชยิงที่ 12.8% ตามลำดับจริงของการถ่าย
+     * ใช้ 9 วินาทีแทน 7 เพราะยิงถี่กว่านั้นจะดึงสายตาไปจากเนื้อหาที่อยู่เหนือฉาก
      *
      * แขนหมุนรอบหัวไหล่ ไม่ใช่เลื่อนทั้งชิ้น จุดหมุนจึงตั้งไว้ที่พิกัดหัวไหล่ใน viewBox
      * ต้องมี transform-box: view-box ไม่งั้น transform-origin จะอ้างอิงกรอบของเส้นเอง
@@ -323,14 +334,19 @@
     .shutter-arm {
       transform-box: view-box;
       transform-origin: 314px 161px;
-      animation: shutter-press 7s ease-in-out infinite;
+      animation: shutter-press 9s ease-in-out infinite;
     }
     .flash-pop {
       opacity: 0;
-      animation: flash-pop 7s linear infinite;
+      animation: flash-pop 9s linear infinite;
     }
     .flash-tube {
-      animation: flash-tube 7s linear infinite;
+      animation: flash-tube 9s linear infinite;
+    }
+    /* แสงทั่วห้องใช้จังหวะเดียวกับแฟลชแต่เบากว่ามาก จึงแยกคีย์เฟรมของตัวเอง */
+    .flash-room {
+      opacity: 0;
+      animation: flash-room 9s linear infinite;
     }
   }
 
@@ -672,6 +688,33 @@
   }
   100% {
     opacity: 0.55;
+  }
+}
+
+/* แสงทั่วห้องขึ้นพร้อมแฟลชแต่จางกว่าและค้างนานกว่านิดหนึ่ง เหมือนตาที่ยังปรับไม่ทัน */
+@keyframes flash-room {
+  0%,
+  12.4% {
+    opacity: 0;
+  }
+  12.8% {
+    opacity: 1;
+  }
+  16.5% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* แกว่งแค่ครึ่งองศา มากกว่านี้จะกลายเป็นของที่กำลังจะหล่น */
+@keyframes boom-swing {
+  from {
+    transform: rotate(-0.5deg);
+  }
+  to {
+    transform: rotate(0.5deg);
   }
 }
 
