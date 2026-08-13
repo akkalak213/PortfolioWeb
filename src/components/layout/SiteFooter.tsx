@@ -49,15 +49,20 @@ export async function SiteFooter() {
 
   return (
     <footer className="border-t border-border bg-subtle no-print">
-      <div className="container py-16 md:py-20">
-        <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1.2fr]">
-          <div>
+      {/*
+        ฟุตเตอร์เคยสูง 1252px บนมือถือ ซึ่งเป็น 1.54 เท่าของความสูงจอ และกินพื้นที่ 24% ของทั้งหน้า
+        ต้นเหตุคือทุกบล็อกวางซ้อนกันเป็นคอลัมน์เดียวและระยะห่างตั้งไว้เท่าหน้าเนื้อหา
+        รอบนี้จับสองคอลัมน์ลิงก์มาอยู่ข้างกันตั้งแต่จอเล็ก และลดระยะทั้งหมดลง
+      */}
+      <div className="container py-12 md:py-14">
+        <div className="grid grid-cols-2 gap-x-8 gap-y-10 lg:grid-cols-[1.4fr_1fr_1fr_1.2fr]">
+          <div className="col-span-2 lg:col-span-1">
             <Wordmark />
-            <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted-foreground text-pretty">
+            <p className="mt-3 max-w-sm text-sm leading-relaxed text-muted-foreground text-pretty">
               {t('aboutBlurb')}
             </p>
             {socials.length > 0 && (
-              <div className="mt-6">
+              <div className="mt-5">
                 <p className="sr-only">{t('followHeading')}</p>
                 <ul className="flex gap-2">
                   {socials.map(({ key, url, Icon }) => (
@@ -79,10 +84,10 @@ export async function SiteFooter() {
           </div>
 
           <nav aria-labelledby="footer-services">
-            <h2 id="footer-services" className="mb-4 text-sm font-medium">
+            <h2 id="footer-services" className="mb-3 text-sm font-medium">
               {t('servicesHeading')}
             </h2>
-            <ul className="space-y-2.5">
+            <ul className="space-y-2">
               {serviceLinks.map((item) => (
                 <li key={item.key}>
                   <Link
@@ -97,10 +102,10 @@ export async function SiteFooter() {
           </nav>
 
           <nav aria-labelledby="footer-company">
-            <h2 id="footer-company" className="mb-4 text-sm font-medium">
+            <h2 id="footer-company" className="mb-3 text-sm font-medium">
               {t('companyHeading')}
             </h2>
-            <ul className="space-y-2.5">
+            <ul className="space-y-2">
               {companyLinks.map((item) => (
                 <li key={item.key}>
                   <Link
@@ -114,9 +119,9 @@ export async function SiteFooter() {
             </ul>
           </nav>
 
-          <div>
-            <h2 className="mb-4 text-sm font-medium">{t('contactHeading')}</h2>
-            <ul className="space-y-3 text-sm text-muted-foreground">
+          <div className="col-span-2 lg:col-span-1">
+            <h2 className="mb-3 text-sm font-medium">{t('contactHeading')}</h2>
+            <ul className="grid gap-x-6 gap-y-2.5 text-sm text-muted-foreground sm:grid-cols-2 lg:grid-cols-1">
               {company.email && (
                 <li className="flex gap-2.5">
                   <Mail size={16} strokeWidth={1.75} className="mt-0.5 shrink-0" />
@@ -161,7 +166,7 @@ export async function SiteFooter() {
           </div>
         </div>
 
-        <div className="mt-14 flex flex-col gap-4 border-t border-border pt-8 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-10 flex flex-col gap-3 border-t border-border pt-6 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <p>
             © {new Date().getFullYear()} {isThai ? company.nameTh : company.nameEn}. {t('rights')}
           </p>

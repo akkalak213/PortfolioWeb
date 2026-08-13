@@ -1,10 +1,13 @@
-import { Handshake, PackageOpen, Receipt } from 'lucide-react'
+import { ArrowRight, Camera, Code2, Handshake, Layers, PackageOpen, Receipt } from 'lucide-react'
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
+import { Link } from '@/i18n/navigation'
 import type { Locale } from '@/i18n/routing'
+import { buttonClasses } from '@/components/ui/Button'
 import { Section } from '@/components/ui/Section'
-import { getTeamMembers } from '@/server/queries'
+import { getSiteSettings } from '@/lib/settings'
+import { getEquipment, getHomeStats, getTeamMembers } from '@/server/queries'
 
 /**
  * เรนเดอร์ตอนมีคนขอ ไม่ prerender ตอน build
@@ -18,7 +21,6 @@ import { getTeamMembers } from '@/server/queries'
  * การอ่านสดทุกครั้งจึงถูกกว่าการเสี่ยงเสิร์ฟหน้าเปล่า
  */
 export const dynamic = 'force-dynamic'
-
 
 export async function generateMetadata({
   params,
@@ -39,8 +41,43 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
   const { locale } = await params
   setRequestLocale(locale)
 
-  const [t, team] = await Promise.all([getTranslations('about'), getTeamMembers()])
+  const [t, tc, team, stats, equipment, settings] = await Promise.all([
+    getTranslations('about'),
+    getTranslations('common'),
+    getTeamMembers(),
+    getHomeStats(),
+    getEquipment(),
+    getSiteSettings(),
+  ])
   const isThai = locale === 'th'
+
+  /**
+   * ตัวเลขอ่านจากฐานข้อมูลจริงทั้งหมด ยกเว้นจำนวนปีที่เป็นค่าคงที่
+   * ตัวไหนยังไม่มีข้อมูลจะไม่แสดง ดีกว่าโชว์ขีดกลางให้ดูเหมือนของที่ยังไม่เสร็จ
+   */
+  const facts = [
+    { value: '12', label: t('statYears') },
+    stats.projects > 0 && { value: `${stats.projects}+`, label: t('statProjects') },
+    stats.averageRating > 0 && { value: stats.averageRating.toFixed(1), label: t('statRating') },
+    equipment.length > 0 && { value: String(equipment.length), label: t('statGear') },
+  ].filter(Boolean) as { value: string; label: string }[]
+
+  const doing = [
+    { icon: Code2, title: t('whatDigitalTitle'), body: t('whatDigitalBody') },
+    { icon: Camera, title: t('whatVisualTitle'), body: t('whatVisualBody') },
+    { icon: Layers, title: t('whatBothTitle'), body: t('whatBothBody') },
+  ]
+
+  const steps = [1, 2, 3, 4, 5].map((n) => ({
+    n,
+    title: t(`process${n}Title` as 'process1Title'),
+    body: t(`process${n}Body` as 'process1Body'),
+  }))
+
+  const clients = [1, 2, 3, 4].map((n) => ({
+    title: t(`client${n}Title` as 'client1Title'),
+    body: t(`client${n}Body` as 'client1Body'),
+  }))
 
   const values = [
     { icon: Receipt, title: t('value1Title'), body: t('value1Body') },
@@ -50,30 +87,85 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
 
   return (
     <>
+      {/* ───────────── หัวเรื่อง พร้อมตัวเลขที่บอกขนาดของทีม ───────────── */}
       <section className="border-b border-border py-16 md:py-24">
         <div className="container">
-          <p className="mb-4 text-xs font-medium uppercase tracking-[0.18em] text-accent">
-            {t('eyebrow')}
-          </p>
-          <h1 className="max-w-4xl font-display text-display-lg text-balance">{t('title')}</h1>
-          <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted-foreground text-pretty">
-            {t('subtitle')}
-          </p>
+          <div className="stage max-w-3xl">
+            <p className="rule-draw mb-4 text-xs font-medium uppercase tracking-[0.18em] text-accent">
+              {t('eyebrow')}
+            </p>
+            <h1 className="font-display text-display-lg text-balance">{t('title')}</h1>
+            <p className="mt-5 text-lg leading-relaxed text-muted-foreground text-pretty">
+              {t('subtitle')}
+            </p>
+          </div>
+
+          <dl className="mt-12 grid grid-cols-2 gap-8 border-t border-border pt-8 md:mt-14 lg:grid-cols-4">
+            {facts.map((f) => (
+              <div key={f.label}>
+                <dt className="text-xs text-muted-foreground">{f.label}</dt>
+                <dd className="tabular mt-1 font-display text-4xl">{f.value}</dd>
+              </div>
+            ))}
+          </dl>
         </div>
       </section>
 
+      {/* ───────────── จุดเริ่มต้น ───────────── */}
       <Section title={t('storyTitle')}>
-        <div className="grid gap-8 lg:grid-cols-2 lg:gap-16">
-          <p className="text-lg leading-relaxed text-muted-foreground text-pretty">
-            {t('storyParagraph1')}
-          </p>
-          <p className="text-lg leading-relaxed text-muted-foreground text-pretty">
-            {t('storyParagraph2')}
-          </p>
+        <div className="grid gap-8 lg:grid-cols-3 lg:gap-12">
+          {[t('storyParagraph1'), t('storyParagraph2'), t('storyParagraph3')].map((p, i) => (
+            <p key={i} className="leading-relaxed text-muted-foreground text-pretty md:text-lg">
+              {p}
+            </p>
+          ))}
         </div>
       </Section>
 
-      <Section tone="subtle" title={t('valuesTitle')}>
+      {/* ───────────── สิ่งที่เราทำ ───────────── */}
+      <Section tone="subtle" title={t('whatTitle')} subtitle={t('whatSubtitle')}>
+        <ul className="reveal-stagger grid gap-px overflow-hidden rounded-lg border border-border bg-border md:grid-cols-3">
+          {doing.map(({ icon: Icon, title, body }) => (
+            <li key={title} className="bg-background p-8">
+              <span className="inline-flex h-11 w-11 items-center justify-center rounded-md bg-accent-subtle text-accent">
+                <Icon size={20} strokeWidth={1.6} aria-hidden />
+              </span>
+              <h3 className="mt-5 font-display text-2xl text-balance">{title}</h3>
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground text-pretty">{body}</p>
+            </li>
+          ))}
+        </ul>
+      </Section>
+
+      {/* ───────────── วิธีทำงาน ───────────── */}
+      <Section title={t('processTitle')} subtitle={t('processSubtitle')}>
+        <ol className="reveal-stagger grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-5">
+          {steps.map(({ n, title, body }) => (
+            <li key={n} className="border-t-2 border-accent/30 pt-5">
+              <span className="tabular font-display text-3xl text-accent">
+                {String(n).padStart(2, '0')}
+              </span>
+              <h3 className="mt-2 font-medium">{title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground text-pretty">{body}</p>
+            </li>
+          ))}
+        </ol>
+      </Section>
+
+      {/* ───────────── เราทำงานกับใคร ───────────── */}
+      <Section tone="subtle" title={t('clientsTitle')} subtitle={t('clientsSubtitle')}>
+        <ul className="reveal-stagger grid gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-2 lg:grid-cols-4">
+          {clients.map(({ title, body }) => (
+            <li key={title} className="bg-background p-7">
+              <h3 className="font-display text-xl text-balance">{title}</h3>
+              <p className="mt-2.5 text-sm leading-relaxed text-muted-foreground text-pretty">{body}</p>
+            </li>
+          ))}
+        </ul>
+      </Section>
+
+      {/* ───────────── สิ่งที่เรายึดถือ ───────────── */}
+      <Section title={t('valuesTitle')}>
         <ul className="reveal-stagger grid gap-px overflow-hidden rounded-lg border border-border bg-border md:grid-cols-3">
           {values.map(({ icon: Icon, title, body }) => (
             <li key={title} className="bg-background p-8">
@@ -87,9 +179,27 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
         </ul>
       </Section>
 
+      {/* ───────────── สตูดิโอ ───────────── */}
+      <Section tone="subtle" title={t('studioTitle')}>
+        <div className="grid gap-8 lg:grid-cols-[1.4fr_1fr] lg:gap-16">
+          <p className="leading-relaxed text-muted-foreground text-pretty md:text-lg">
+            {t('studioBody')}
+          </p>
+          <div className="space-y-3 text-sm text-muted-foreground">
+            <p className="text-pretty">{isThai ? settings.company.addressTh : settings.company.addressEn}</p>
+            <p>{isThai ? settings.company.openingHoursTh : settings.company.openingHoursEn}</p>
+            <Link href="/rental" className={buttonClasses('outline', 'md', 'mt-2')}>
+              {t('studioCta')}
+              <ArrowRight size={16} strokeWidth={1.75} aria-hidden />
+            </Link>
+          </div>
+        </div>
+      </Section>
+
+      {/* ───────────── ทีม แสดงเมื่อมีข้อมูลเท่านั้น ───────────── */}
       {team.length > 0 && (
         <Section title={t('teamTitle')} subtitle={t('teamSubtitle')}>
-          <ul className="grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="reveal-stagger grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
             {team.map((member) => (
               <li key={member.id}>
                 {member.photo && (
@@ -115,6 +225,17 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
           </ul>
         </Section>
       )}
+
+      {/* ───────────── ชวนคุยงาน ───────────── */}
+      <section className="border-t border-border py-16 md:py-20">
+        <div className="container flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="font-display text-display-md text-balance">{t('contactCta')}</h2>
+          <Link href="/contact" className={buttonClasses('accent', 'lg', 'shrink-0')}>
+            {tc('getQuote')}
+            <ArrowRight size={18} strokeWidth={1.75} aria-hidden />
+          </Link>
+        </div>
+      </section>
     </>
   )
 }
