@@ -1,4 +1,5 @@
 import { ArrowRight, ArrowUpRight, Lightbulb, PackageOpen, SlidersHorizontal, Star } from 'lucide-react'
+import Image from 'next/image'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
 import type { Locale } from '@/i18n/routing'
@@ -38,21 +39,29 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
   const { locale } = await params
   setRequestLocale(locale)
 
-  const [t, tc, tEquip, settings, services, stats, equipment, featured, reviews] =
+  const [t, tc, tEquip, tCat, settings, services, stats, equipment, featured, reviews] =
     await Promise.all([
       getTranslations('home'),
       getTranslations('common'),
       getTranslations('equipmentCategory'),
+      getTranslations('serviceCategory'),
       getSiteSettings(),
       getActiveServices(),
       getHomeStats(),
       getEquipment(),
-      getFeaturedProjects(3),
+      getFeaturedProjects(4),
       getApprovedReviews(3),
     ])
 
   const isThai = locale === 'th'
   const { hero } = settings
+
+  /**
+   * ผลงานชิ้นแรกใช้เป็นภาพใน hero ที่เหลือไปอยู่ส่วนผลงานเด่นด้านล่าง
+   * ถ้าไม่มีผลงานเลย hero จะเหลือคอลัมน์เดียวแทนที่จะมีช่องว่างค้างไว้
+   */
+  const heroProject = featured[0] ?? null
+  const restFeatured = featured.slice(1)
 
   /**
    * จัดอุปกรณ์เข้าหมวดจากข้อมูลจริงในคลัง ไม่ได้เขียนรายการไว้ตายตัว
@@ -88,7 +97,12 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
           className="keylight pointer-events-none absolute -right-1/4 -top-1/2 h-[130%] w-[80%] rounded-full bg-accent/10 blur-[120px]"
         />
 
-        <div className="container relative grid gap-14 py-20 md:py-28 lg:grid-cols-[1.15fr_1fr] lg:items-center lg:gap-20 lg:py-36">
+        <div
+          className={cn(
+            "container relative grid gap-14 py-20 md:py-28 lg:items-center lg:gap-20 lg:py-36",
+            heroProject && "lg:grid-cols-[1.15fr_1fr]",
+          )}
+        >
           {/* stage ไล่จังหวะให้ลูกทีละชิ้น หัวเรื่องเปิดแบบม่านรูดขึ้นแยกต่างหาก */}
           <div className="stage">
             <p className="mb-5 text-xs font-medium uppercase tracking-[0.2em] text-accent">
@@ -136,19 +150,38 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
             </dl>
           </div>
 
-          {/* บล็อกภาพ hero — รอเปลี่ยนเป็น showreel จริงเมื่อได้ไฟล์จากลูกค้า */}
-          <div
-            aria-hidden
-            className="relative hidden aspect-[4/5] overflow-hidden rounded-lg border border-border bg-subtle lg:block"
-          >
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,hsl(var(--accent)/0.18),transparent_60%)]" />
-            <div className="absolute inset-x-8 bottom-8 space-y-2">
-              <div className="h-px w-full bg-border" />
-              <p className="font-mono text-[0.65rem] uppercase tracking-[0.2em] text-muted-foreground">
-                Showreel · 2026
-              </p>
-            </div>
-          </div>
+          {/*
+            เดิมตรงนี้เป็นกล่องเปล่าเขียนว่า Showreel · 2026 ซึ่งเป็นที่จองไว้รอวิดีโอโชว์รีล
+            แต่โชว์รีลยังไม่มี กล่องจึงกลายเป็นการโฆษณาของที่ยังไม่มีอยู่จริง
+            เปลี่ยนเป็นผลงานเด่นชิ้นแรกจากฐานข้อมูล กดแล้วไปหน้าผลงานได้เลย
+          */}
+          {heroProject && (
+            <Link
+              href={`/work/${heroProject.slug}`}
+              className="group relative hidden aspect-[4/5] overflow-hidden rounded-lg border border-border bg-subtle lg:block"
+            >
+              <Image
+                src={heroProject.coverImage}
+                alt=""
+                fill
+                priority
+                sizes="(min-width: 1024px) 40vw, 100vw"
+                placeholder={heroProject.coverBlurData ? 'blur' : 'empty'}
+                blurDataURL={heroProject.coverBlurData ?? undefined}
+                className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
+              />
+              {/* ไล่สีทึบที่ก้นภาพ ตัวหนังสือจึงอ่านออกไม่ว่าภาพข้างล่างจะสว่างแค่ไหน */}
+              <div className="absolute inset-0 bg-gradient-to-t from-[hsl(240_20%_4%/0.88)] via-[hsl(240_20%_4%/0.15)] to-transparent" />
+              <div className="absolute inset-x-7 bottom-7">
+                <p className="font-mono text-[0.65rem] uppercase tracking-[0.2em] text-white/70">
+                  {tCat(heroProject.category)}
+                </p>
+                <p className="mt-1.5 font-display text-2xl text-balance text-white">
+                  {isThai ? heroProject.titleTh : heroProject.titleEn}
+                </p>
+              </div>
+            </Link>
+          )}
         </div>
       </section>
 
@@ -335,8 +368,8 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
         <StudioScene className="block h-[190px] w-full sm:h-[240px] lg:h-[300px]" />
       </section>
 
-      {/* ───────────── ผลงานเด่น ───────────── */}
-      {featured.length > 0 && (
+      {/* ───────────── ผลงานเด่น ชิ้นแรกไปอยู่ใน hero แล้ว ที่นี่จึงเป็นชิ้นที่เหลือ ───────────── */}
+      {restFeatured.length > 0 && (
         <Section
           eyebrow={t('workEyebrow')}
           title={t('workTitle')}
@@ -348,7 +381,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
           }
         >
           <div className="reveal-stagger grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
-            {featured.map((project) => (
+            {restFeatured.map((project) => (
               <ProjectCard key={project.id} project={project} locale={locale} />
             ))}
           </div>

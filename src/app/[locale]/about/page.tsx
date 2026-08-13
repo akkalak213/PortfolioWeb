@@ -7,7 +7,7 @@ import type { Locale } from '@/i18n/routing'
 import { buttonClasses } from '@/components/ui/Button'
 import { Section } from '@/components/ui/Section'
 import { getSiteSettings } from '@/lib/settings'
-import { getEquipment, getHomeStats, getTeamMembers } from '@/server/queries'
+import { getTeamMembers } from '@/server/queries'
 
 /**
  * เรนเดอร์ตอนมีคนขอ ไม่ prerender ตอน build
@@ -41,26 +41,13 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
   const { locale } = await params
   setRequestLocale(locale)
 
-  const [t, tc, team, stats, equipment, settings] = await Promise.all([
+  const [t, tc, team, settings] = await Promise.all([
     getTranslations('about'),
     getTranslations('common'),
     getTeamMembers(),
-    getHomeStats(),
-    getEquipment(),
     getSiteSettings(),
   ])
   const isThai = locale === 'th'
-
-  /**
-   * ตัวเลขอ่านจากฐานข้อมูลจริงทั้งหมด ยกเว้นจำนวนปีที่เป็นค่าคงที่
-   * ตัวไหนยังไม่มีข้อมูลจะไม่แสดง ดีกว่าโชว์ขีดกลางให้ดูเหมือนของที่ยังไม่เสร็จ
-   */
-  const facts = [
-    { value: '12', label: t('statYears') },
-    stats.projects > 0 && { value: `${stats.projects}+`, label: t('statProjects') },
-    stats.averageRating > 0 && { value: stats.averageRating.toFixed(1), label: t('statRating') },
-    equipment.length > 0 && { value: String(equipment.length), label: t('statGear') },
-  ].filter(Boolean) as { value: string; label: string }[]
 
   const doing = [
     { icon: Code2, title: t('whatDigitalTitle'), body: t('whatDigitalBody') },
@@ -99,15 +86,6 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
               {t('subtitle')}
             </p>
           </div>
-
-          <dl className="mt-12 grid grid-cols-2 gap-8 border-t border-border pt-8 md:mt-14 lg:grid-cols-4">
-            {facts.map((f) => (
-              <div key={f.label}>
-                <dt className="text-xs text-muted-foreground">{f.label}</dt>
-                <dd className="tabular mt-1 font-display text-4xl">{f.value}</dd>
-              </div>
-            ))}
-          </dl>
         </div>
       </section>
 
