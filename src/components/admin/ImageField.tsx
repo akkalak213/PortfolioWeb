@@ -173,8 +173,9 @@ export function ImageListField({
     <fieldset>
       <legend className="mb-2 text-sm font-medium">{label}</legend>
 
-      {urls.map((url) => (
-        <input key={url} type="hidden" name={name} value={url} />
+      {/* URL ซ้ำกันได้ถ้าเผลอเลือกไฟล์เดิมสองรอบ — ใช้ลำดับเป็น key ไม่งั้น React จะทิ้งช่องที่ซ้ำ */}
+      {urls.map((url, index) => (
+        <input key={index} type="hidden" name={name} value={url} />
       ))}
 
       {urls.length > 0 && (

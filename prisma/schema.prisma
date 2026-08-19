@@ -56,7 +56,7 @@ enum EquipmentCategory {
   LENS
   LIGHTING
   AUDIO
-  GRIP // ขาตั้ง ริก สไลเดอร์ จิมบอล
+  GRIP // ขาตั้ง ริก สไลเดอร์ กิมบอล
   DRONE
   ACCESSORY
 }

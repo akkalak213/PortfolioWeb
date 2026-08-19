@@ -57,11 +57,15 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
   const { hero } = settings
 
   /**
-   * ผลงานชิ้นแรกใช้เป็นภาพใน hero ที่เหลือไปอยู่ส่วนผลงานเด่นด้านล่าง
+   * ผลงานชิ้นแรกที่มีรูปปกจริงใช้เป็นภาพใน hero ที่เหลือไปอยู่ส่วนผลงานเด่นด้านล่าง
    * ถ้าไม่มีผลงานเลย hero จะเหลือคอลัมน์เดียวแทนที่จะมีช่องว่างค้างไว้
+   *
+   * ต้องเช็ครูปปกด้วย ไม่ใช่หยิบชิ้นแรกมาดื้อ ๆ — ชิ้นที่รูปปกว่างจะทำให้ next/image ล้มทั้งหน้า
+   * และถ้าข้ามไปเฉย ๆ ผลงานชิ้นนั้นจะหายไปจากหน้าแรกทั้งที่ตั้งเป็นผลงานเด่นไว้
    */
-  const heroProject = featured[0] ?? null
-  const restFeatured = featured.slice(1)
+  const heroIndex = featured.findIndex((project) => project.coverImage)
+  const heroProject = heroIndex >= 0 ? featured[heroIndex] : null
+  const restFeatured = featured.filter((_, index) => index !== heroIndex)
 
   /**
    * จัดอุปกรณ์เข้าหมวดจากข้อมูลจริงในคลัง ไม่ได้เขียนรายการไว้ตายตัว
@@ -344,9 +348,10 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
             <div className="marquee-track">
               {[0, 1].map((copy) => (
                 <ul key={copy} className="flex shrink-0 items-center">
-                  {gearNames.map((name) => (
+                  {/* ชื่อรุ่นซ้ำกันได้ถ้ามีของรุ่นเดียวกันหลายตัว จึงใช้ลำดับเป็น key ไม่ใช่ชื่อ */}
+                  {gearNames.map((name, index) => (
                     <li
-                      key={name}
+                      key={index}
                       className="flex items-center gap-6 whitespace-nowrap px-6 font-mono text-xs uppercase tracking-[0.16em] text-muted-foreground"
                     >
                       {name}

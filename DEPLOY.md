@@ -21,7 +21,7 @@
 |---|---|
 | `DATABASE_URL` | `${{Postgres.DATABASE_URL}}` — พิมพ์แบบนี้ตรง ๆ Railway จะอ้างอิงให้เอง |
 | `AUTH_SECRET` | สร้างด้วย `npx auth secret` แล้วคัดลอกมาวาง |
-| `AUTH_URL` | โดเมนจริง เช่น `https://alexanproduction.com` |
+| `AUTH_URL` | โดเมนจริง เช่น `https://alexanprod.studio` |
 | `NEXT_PUBLIC_SITE_URL` | โดเมนเดียวกับ `AUTH_URL` |
 
 > ไม่ต้องตั้ง `AUTH_TRUST_HOST` — เปิดไว้ในโค้ดแล้วที่ `src/auth.config.ts`
@@ -45,7 +45,7 @@
 ใน Railway ต้องเพิ่มเป็น **Build argument** ด้วย (Settings → Build → Build Arguments):
 
 ```
-NEXT_PUBLIC_SITE_URL=https://alexanproduction.com
+NEXT_PUBLIC_SITE_URL=https://alexanprod.studio
 NEXT_PUBLIC_GA_ID=
 R2_PUBLIC_URL=https://pub-xxxxxxxx.r2.dev
 ```
@@ -82,7 +82,7 @@ DATABASE_URL="<ค่า public ที่ลงท้าย proxy.rlwy.net>" SEE
 เรียกดูเองได้:
 
 ```bash
-curl https://alexanproduction.com/api/health
+curl https://alexanprod.studio/api/health
 ```
 
 ---
@@ -101,7 +101,7 @@ curl https://alexanproduction.com/api/health
 ```json
 [
   {
-    "AllowedOrigins": ["https://alexanproduction.com", "http://localhost:3000"],
+    "AllowedOrigins": ["https://alexanprod.studio", "http://localhost:3000"],
     "AllowedMethods": ["PUT", "GET"],
     "AllowedHeaders": ["content-type"],
     "MaxAgeSeconds": 3600
@@ -120,4 +120,11 @@ curl https://alexanproduction.com/api/health
 - [ ] แก้ข้อมูลบริษัทที่ `/admin/settings` ให้เป็นข้อมูลจริง — ค่า seed เป็นตัวอย่างทั้งหมด
 - [ ] ลบผลงานและรีวิวตัวอย่างที่มาจาก seed
 - [ ] เอา `picsum.photos` ออกจาก `next.config.ts` เมื่อเปลี่ยนรูปครบแล้ว
-- [ ] ส่ง `https://alexanproduction.com/sitemap.xml` เข้า Google Search Console
+- [ ] ตั้ง `NEXT_PUBLIC_SITE_URL` และ `AUTH_URL` เป็น `https://alexanprod.studio` ให้ตรงกันทั้งคู่
+      (ค่านี้เป็นที่มาของ canonical, hreflang, sitemap, JSON-LD และรูปพรีวิวตอนแชร์ — ผิดแล้วผิดทั้งเว็บ)
+- [ ] ส่ง `https://alexanprod.studio/sitemap.xml` เข้า Google Search Console
+- [ ] ตรวจ JSON-LD ด้วย Rich Results Test — ต้องเจอ ProfessionalService พร้อม logo และ WebSite
+- [ ] ลองแชร์ลิงก์ลง LINE หรือ Facebook ดูว่าการ์ดพรีวิวขึ้นโลโก้และหัวเรื่องถูกต้อง
+- [ ] กรอกลิงก์โซเชียลที่ `/admin/settings` ให้ตรงช่อง — ลิงก์ TikTok ต้องอยู่ในช่อง TikTok
+      ไม่ใช่ช่อง LINE (ฟุตเตอร์ตัดลิงก์ซ้ำออกให้ แต่ไอคอนจะผิดแพลตฟอร์ม)
+- [ ] ตั้งค่า Resend ให้ครบ ถ้าต้องการปุ่ม "ส่งใบเสนอราคาทางอีเมล" ในหน้า `/admin/quotes`

@@ -129,7 +129,7 @@ export const getLeadById = cache((id: string) =>
   db.lead.findUnique({
     where: { id },
     include: {
-      items: { include: { equipment: { select: { slug: true, brand: true, model: true } } } },
+      items: { include: { equipment: { select: { id: true, slug: true, brand: true, model: true } } } },
       notes: {
         orderBy: { createdAt: 'desc' },
         include: { author: { select: { name: true } } },

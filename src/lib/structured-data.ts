@@ -13,6 +13,9 @@ const siteUrl = clientEnv.NEXT_PUBLIC_SITE_URL.replace(/\/$/, '')
 
 export const absoluteUrl = (path: string) => `${siteUrl}${path.startsWith('/') ? path : `/${path}`}`
 
+/** โลโก้ที่ Google ดึงไปแสดงข้าง ๆ ผลค้นหาและใน knowledge panel */
+const logoUrl = absoluteUrl('/logo.png')
+
 export function organizationSchema(settings: SiteSettings, locale: Locale) {
   const { company, social } = settings
   const isThai = locale === 'th'
@@ -30,6 +33,24 @@ export function organizationSchema(settings: SiteSettings, locale: Locale) {
     email: company.email || undefined,
     telephone: company.phone || undefined,
     taxID: company.taxId || undefined,
+    /**
+     * logo กับ image ต้องมีทั้งคู่และเป็น URL เต็ม
+     * logo คือรูปที่ Google เอาไปวางใน knowledge panel ส่วน image คือรูปประกอบผลค้นหา
+     * ขาดไปแล้วผลค้นหาจะเป็นตัวหนังสือล้วน ไม่มีอะไรบอกว่าเป็นแบรนด์ไหน
+     */
+    logo: {
+      '@type': 'ImageObject',
+      url: logoUrl,
+      width: 512,
+      height: 512,
+    },
+    image: logoUrl,
+    priceRange: '฿฿',
+    currenciesAccepted: 'THB',
+    ...(company.openingHoursTh || company.openingHoursEn
+      ? { openingHours: isThai ? company.openingHoursTh : company.openingHoursEn }
+      : {}),
+    areaServed: { '@type': 'Country', name: 'Thailand' },
     ...(sameAs.length ? { sameAs } : {}),
     address: {
       '@type': 'PostalAddress',
@@ -66,6 +87,7 @@ export function websiteSchema(settings: SiteSettings, locale: Locale) {
     '@id': `${siteUrl}/#website`,
     url: absoluteUrl(`/${locale}`),
     name: locale === 'th' ? settings.company.nameTh : settings.company.nameEn,
+    description: locale === 'th' ? settings.hero.subheadlineTh : settings.hero.subheadlineEn,
     inLanguage: locale === 'th' ? 'th-TH' : 'en-US',
     publisher: { '@id': `${siteUrl}/#organization` },
   }
@@ -158,7 +180,11 @@ export function articleSchema({
     author: authorName
       ? { '@type': 'Person', name: authorName }
       : { '@id': `${siteUrl}/#organization` },
-    publisher: { '@id': `${siteUrl}/#organization` },
+    publisher: {
+      '@id': `${siteUrl}/#organization`,
+      // Google ต้องการ publisher.logo ตรงนี้ด้วย ไม่ยอมตามไปอ่านจาก @id อย่างเดียว
+      logo: { '@type': 'ImageObject', url: logoUrl },
+    },
   }
 }
 
@@ -175,7 +201,7 @@ export function creativeWorkSchema({
   description: string
   slug: string
   locale: Locale
-  image: string
+  image: string | null
   year: number | null
   clientName: string | null
 }) {
@@ -185,7 +211,8 @@ export function creativeWorkSchema({
     name: title,
     description,
     url: absoluteUrl(`/${locale}/work/${slug}`),
-    image: [image],
+    // ผลงานที่รูปปกว่างต้องไม่ส่ง image: [''] ออกไป — Google อ่านแล้วตีเป็นข้อมูลผิดรูป
+    ...(image ? { image: [image] } : {}),
     ...(year ? { dateCreated: String(year) } : {}),
     creator: { '@id': `${siteUrl}/#organization` },
     ...(clientName ? { sourceOrganization: { '@type': 'Organization', name: clientName } } : {}),

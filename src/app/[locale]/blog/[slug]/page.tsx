@@ -3,6 +3,7 @@ import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import type { Locale } from '@/i18n/routing'
+import { pageMetadata } from '@/lib/seo'
 import { Badge } from '@/components/ui/Badge'
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
 import { Prose } from '@/components/ui/Prose'
@@ -45,18 +46,16 @@ export async function generateMetadata({
     (isThai ? post.seoDescriptionTh : post.seoDescriptionEn) ??
     (isThai ? post.excerptTh : post.excerptEn)
 
-  return {
+  return pageMetadata({
+    locale,
+    path: `/blog/${slug}`,
     title,
     description,
-    alternates: { canonical: `/${locale}/blog/${slug}` },
-    openGraph: {
-      type: 'article',
-      title,
-      description,
-      publishedTime: post.publishedAt?.toISOString(),
-      images: post.coverImage ? [post.coverImage] : undefined,
-    },
-  }
+    image: post.coverImage,
+    type: 'article',
+    publishedTime: post.publishedAt?.toISOString(),
+    modifiedTime: post.updatedAt.toISOString(),
+  })
 }
 
 export default async function PostDetailPage({

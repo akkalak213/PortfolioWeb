@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
 import type { Locale } from '@/i18n/routing'
+import { pageMetadata } from '@/lib/seo'
 import { buttonClasses } from '@/components/ui/Button'
 import { Section } from '@/components/ui/Section'
 import { getSiteSettings } from '@/lib/settings'
@@ -30,11 +31,12 @@ export async function generateMetadata({
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: 'about' })
 
-  return {
+  return pageMetadata({
+    locale,
+    path: '/about',
     title: t('metaTitle'),
     description: t('metaDescription'),
-    alternates: { canonical: `/${locale}/about` },
-  }
+  })
 }
 
 export default async function AboutPage({ params }: { params: Promise<{ locale: Locale }> }) {

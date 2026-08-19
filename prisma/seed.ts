@@ -28,7 +28,7 @@ const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString }) })
 const img = (seed: string, w = 1600, h = 1000) => `https://picsum.photos/seed/${seed}/${w}/${h}`
 
 async function seedAdmin() {
-  const email = process.env.SEED_ADMIN_EMAIL ?? 'admin@alexanproduction.com'
+  const email = process.env.SEED_ADMIN_EMAIL ?? 'admin@alexanprod.studio'
   const password = process.env.SEED_ADMIN_PASSWORD
 
   if (!password) {
@@ -663,7 +663,7 @@ const equipment = [
   { slug: 'godox-ad600', category: EquipmentCategory.LIGHTING, brand: 'Godox', model: 'AD600 Pro', nameTh: 'แฟลชสตูดิโอ Godox AD600 Pro', nameEn: 'Godox AD600 Pro Strobe', dailyRate: 900, depositAmount: 8000, specs: [{ label: 'กำลังไฟ', value: '600Ws' }, { label: 'แบตเตอรี่', value: 'ยิงได้ 360 ครั้ง' }] },
   { slug: 'rode-wireless-pro', category: EquipmentCategory.AUDIO, brand: 'Rode', model: 'Wireless PRO', nameTh: 'ไมค์ไร้สาย Rode Wireless PRO', nameEn: 'Rode Wireless PRO Mic Kit', dailyRate: 600, depositAmount: 5000, specs: [{ label: 'จำนวนช่อง', value: '2 ตัวส่ง' }, { label: 'ระยะ', value: '260 เมตร' }, { label: 'บันทึกสำรอง', value: 'ในตัว 32-bit float' }] },
   { slug: 'zoom-h6', category: EquipmentCategory.AUDIO, brand: 'Zoom', model: 'H6', nameTh: 'เครื่องบันทึกเสียง Zoom H6', nameEn: 'Zoom H6 Field Recorder', dailyRate: 400, depositAmount: 3000, specs: [{ label: 'ช่องรับ', value: '6 ช่อง' }, { label: 'ความละเอียด', value: '24-bit / 96kHz' }] },
-  { slug: 'dji-rs4-pro', category: EquipmentCategory.GRIP, brand: 'DJI', model: 'RS 4 Pro', nameTh: 'จิมบอล DJI RS 4 Pro', nameEn: 'DJI RS 4 Pro Gimbal', dailyRate: 1000, depositAmount: 10000, specs: [{ label: 'รับน้ำหนัก', value: '4.5 กก.' }, { label: 'แบตเตอรี่', value: '13 ชั่วโมง' }] },
+  { slug: 'dji-rs4-pro', category: EquipmentCategory.GRIP, brand: 'DJI', model: 'RS 4 Pro', nameTh: 'กิมบอล DJI RS 4 Pro', nameEn: 'DJI RS 4 Pro Gimbal', dailyRate: 1000, depositAmount: 10000, specs: [{ label: 'รับน้ำหนัก', value: '4.5 กก.' }, { label: 'แบตเตอรี่', value: '13 ชั่วโมง' }] },
   { slug: 'manfrotto-504x', category: EquipmentCategory.GRIP, brand: 'Manfrotto', model: '504X + 645 Fast', nameTh: 'ขาตั้งกล้องวิดีโอ Manfrotto 504X', nameEn: 'Manfrotto 504X Video Tripod', dailyRate: 500, depositAmount: 4000, specs: [{ label: 'รับน้ำหนัก', value: '12 กก.' }, { label: 'ความสูงสูงสุด', value: '166 ซม.' }] },
   { slug: 'dji-mavic-3-pro', category: EquipmentCategory.DRONE, brand: 'DJI', model: 'Mavic 3 Pro', nameTh: 'โดรน DJI Mavic 3 Pro', nameEn: 'DJI Mavic 3 Pro Drone', dailyRate: 2200, depositAmount: 20000, specs: [{ label: 'กล้อง', value: 'Hasselblad 4/3 CMOS' }, { label: 'วิดีโอ', value: '5.1K 50fps' }, { label: 'บินได้', value: '43 นาที' }], isFeatured: true },
   { slug: 'sandisk-cfexpress-256', category: EquipmentCategory.ACCESSORY, brand: 'SanDisk', model: 'CFexpress Type A 256GB', nameTh: 'การ์ดความจำ CFexpress 256GB', nameEn: 'CFexpress Type A 256GB Card', dailyRate: 250, depositAmount: 3000, specs: [{ label: 'ความจุ', value: '256GB' }, { label: 'ความเร็วเขียน', value: '700 MB/s' }] },

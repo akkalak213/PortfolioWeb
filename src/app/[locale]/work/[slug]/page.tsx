@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
 import type { Locale } from '@/i18n/routing'
+import { pageMetadata } from '@/lib/seo'
 import { Badge } from '@/components/ui/Badge'
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
 import { buttonClasses } from '@/components/ui/Button'
@@ -62,12 +63,15 @@ export async function generateMetadata({
     (isThai ? project.seoDescriptionTh : project.seoDescriptionEn) ??
     (isThai ? project.summaryTh : project.summaryEn)
 
-  return {
+  return pageMetadata({
+    locale,
+    path: `/work/${slug}`,
     title,
     description,
-    alternates: { canonical: `/${locale}/work/${slug}` },
-    openGraph: { type: 'article', title, description, images: [project.coverImage] },
-  }
+    image: project.coverImage || null,
+    type: 'article',
+    modifiedTime: project.updatedAt.toISOString(),
+  })
 }
 
 export default async function ProjectDetailPage({
@@ -210,6 +214,8 @@ export default async function ProjectDetailPage({
           />
         ) : (
           <div className="relative aspect-[16/9] overflow-hidden rounded-lg border border-border bg-subtle">
+            {/* ผลงานเก่าบางชิ้นอาจไม่มีรูปปก — next/image กับ src ว่างจะโยน error ทั้งหน้า */}
+            {project.coverImage && (
             <Image
               src={project.coverImage}
               alt=""
@@ -220,6 +226,7 @@ export default async function ProjectDetailPage({
               blurDataURL={project.coverBlurData ?? undefined}
               className="object-cover"
             />
+            )}
           </div>
         )}
       </div>

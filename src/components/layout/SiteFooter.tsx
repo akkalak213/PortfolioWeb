@@ -1,6 +1,7 @@
 import { Clock, Facebook, Instagram, Mail, MapPin, MessageCircle, Phone, Youtube } from 'lucide-react'
 import { getLocale, getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
+import { LineIcon, TikTokIcon } from '@/components/ui/BrandIcons'
 import { getSiteSettings } from '@/lib/settings'
 import { Wordmark } from './Wordmark'
 
@@ -22,12 +23,17 @@ const companyLinks = [
   { key: 'contact', href: '/contact' },
 ] as const
 
-const socialIcons = {
-  facebook: Facebook,
-  instagram: Instagram,
-  youtube: Youtube,
-  line: MessageCircle,
-} as const
+/**
+ * ต้องครบทุกช่องที่หลังบ้านให้กรอกได้ ไม่งั้นกรอกลิงก์ไปแล้วปุ่มไม่ขึ้น
+ * TikTok หายไปทั้งที่หน้าตั้งค่ามีช่องให้กรอก — lucide ไม่มีไอคอนโลโก้ให้ จึงวาดเอง
+ */
+const socials = [
+  { key: 'facebook', label: 'Facebook', Icon: Facebook },
+  { key: 'instagram', label: 'Instagram', Icon: Instagram },
+  { key: 'youtube', label: 'YouTube', Icon: Youtube },
+  { key: 'tiktok', label: 'TikTok', Icon: TikTokIcon },
+  { key: 'line', label: 'LINE', Icon: LineIcon },
+] as const
 
 export async function SiteFooter() {
   const [t, tNav, tCat, locale, settings] = await Promise.all([
@@ -43,9 +49,21 @@ export async function SiteFooter() {
   const address = isThai ? company.addressTh : company.addressEn
   const hours = isThai ? company.openingHoursTh : company.openingHoursEn
 
-  const socials = (Object.keys(socialIcons) as (keyof typeof socialIcons)[])
-    .map((key) => ({ key, url: social[key], Icon: socialIcons[key] }))
-    .filter((s) => Boolean(s.url))
+  /**
+   * ตัดลิงก์ซ้ำออก
+   *
+   * เกิดขึ้นจริงมาแล้ว: ตอนที่ปุ่ม TikTok ยังไม่ทำงาน มีการเอาลิงก์ TikTok ไปใส่ในช่อง LINE แทน
+   * พอปุ่ม TikTok ใช้ได้ ฟุตเตอร์จะมีสองปุ่มที่พาไปที่เดียวกัน ซึ่งดูเหมือนเว็บพัง
+   * เก็บอันแรกที่เจอไว้ตัวเดียวพอ แล้วค่อยไปแก้ค่าที่หน้าตั้งค่าให้ถูกทีหลัง
+   */
+  const seen = new Set<string>()
+  const socialLinks = socials
+    .map((item) => ({ ...item, url: social[item.key] }))
+    .filter((item) => {
+      if (!item.url || seen.has(item.url)) return false
+      seen.add(item.url)
+      return true
+    })
 
   return (
     <footer className="border-t border-border bg-subtle no-print">
@@ -61,20 +79,21 @@ export async function SiteFooter() {
             <p className="mt-3 max-w-sm text-sm leading-relaxed text-muted-foreground text-pretty">
               {t('aboutBlurb')}
             </p>
-            {socials.length > 0 && (
+            {socialLinks.length > 0 && (
               <div className="mt-5">
                 <p className="sr-only">{t('followHeading')}</p>
                 <ul className="flex gap-2">
-                  {socials.map(({ key, url, Icon }) => (
+                  {socialLinks.map(({ key, label, url, Icon }) => (
                     <li key={key}>
                       <a
                         href={url}
                         target="_blank"
                         rel="noreferrer noopener"
-                        aria-label={key}
+                        // ชื่อแพลตฟอร์มจริง ไม่ใช่คีย์ในโค้ด — screen reader อ่านออกเสียงตัวนี้
+                        aria-label={label}
                         className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:border-accent hover:text-accent"
                       >
-                        <Icon size={16} strokeWidth={1.75} />
+                        <Icon size={16} />
                       </a>
                     </li>
                   ))}

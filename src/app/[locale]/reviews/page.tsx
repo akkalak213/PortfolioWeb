@@ -2,6 +2,7 @@ import { MessageSquareQuote, Users } from 'lucide-react'
 import type { Metadata } from 'next'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import type { Locale } from '@/i18n/routing'
+import { pageMetadata } from '@/lib/seo'
 import { ReviewCard } from '@/components/reviews/ReviewCard'
 import { ReviewForm } from '@/components/reviews/ReviewForm'
 import { RatingStars } from '@/components/ui/RatingStars'
@@ -33,11 +34,12 @@ export async function generateMetadata({
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: 'reviews' })
 
-  return {
+  return pageMetadata({
+    locale,
+    path: '/reviews',
     title: t('metaTitle'),
     description: t('metaDescription'),
-    alternates: { canonical: `/${locale}/reviews` },
-  }
+  })
 }
 
 export default async function ReviewsPage({ params }: { params: Promise<{ locale: Locale }> }) {

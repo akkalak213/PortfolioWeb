@@ -6,6 +6,7 @@ import { useFormStatus } from 'react-dom'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Form'
 import { cn } from '@/lib/utils'
+import type { AdminActionState } from '@/server/admin-state'
 
 /**
  * ชิ้นส่วนฟอร์มที่หน้า CMS ทุกหน้าใช้ร่วมกัน
@@ -14,6 +15,48 @@ import { cn } from '@/lib/utils'
  * ให้ input ชื่อซ้ำกันหลายตัวแล้วอ่านด้วย formData.getAll() ฝั่ง server
  * ฟอร์มจึงยังทำงานได้แม้ JavaScript โหลดไม่ทัน และโค้ดสั้นกว่ามาก
  */
+
+/**
+ * ตราเวลาแก้ล่าสุดของระเบียนที่ฟอร์มใบนี้เรนเดอร์มา
+ *
+ * ส่งกลับไปกับทุกการบันทึก ฝั่ง server จะเทียบกับของจริงแล้วปฏิเสธถ้าหน้านี้เป็นภาพเก่า
+ * (เปิดค้างสองแท็บ กดปุ่มย้อนกลับ หรือมีคนอื่นแก้ไปก่อน) แทนที่จะเขียนทับของใหม่เงียบ ๆ
+ *
+ * หลังบันทึกสำเร็จ action คืนตราเวลาใหม่มาใน state ฟอร์มจึงกดบันทึกซ้ำได้ทันทีโดยไม่ต้องรีเฟรช
+ */
+export function VersionField({
+  initial,
+  state,
+}: {
+  initial: string
+  state: AdminActionState
+}) {
+  return <input type="hidden" name="expectedVersion" value={state.version ?? initial} />
+}
+
+/**
+ * ให้แต่ละแถวถือ id ของตัวเอง เพื่อใช้เป็น key แทนดัชนี
+ *
+ * ช่องกรอกในสองคอมโพเนนต์ข้างล่างเป็นแบบ uncontrolled (ใช้ defaultValue)
+ * React ไม่เขียนค่าใหม่ทับช่องที่ mount ไปแล้วเมื่อ defaultValue เปลี่ยน
+ * ถ้า key เป็นดัชนี การลบแถวกลางจะทำให้ช่องที่เหลือเลื่อนดัชนีแต่ค่าใน DOM ไม่ขยับตาม
+ * ผลคือลบแถวหนึ่งแต่ข้อมูลของอีกแถวหายไปแทน — id ประจำแถวตัดปัญหานี้ทั้งหมด
+ */
+function useRows<T>(initial: T[], blank: T) {
+  const [rows, setRows] = useState(() =>
+    (initial.length ? initial : [blank]).map((data, index) => ({ id: index, data })),
+  )
+
+  return {
+    rows,
+    add: () =>
+      setRows((current) => [
+        ...current,
+        { id: current.reduce((max, row) => Math.max(max, row.id), -1) + 1, data: blank },
+      ]),
+    removeAt: (index: number) => setRows((current) => current.filter((_, i) => i !== index)),
+  }
+}
 
 export function SubmitButton({
   children,
@@ -92,23 +135,23 @@ export function RepeatableInput({
   placeholder?: string
   addLabel?: string
 }) {
-  const [rows, setRows] = useState<string[]>(initial.length ? initial : [''])
+  const { rows, add, removeAt } = useRows<string>(initial, '')
 
   return (
     <fieldset>
       <legend className="mb-2 text-sm font-medium">{label}</legend>
       <div className="space-y-2">
-        {rows.map((value, index) => (
-          <div key={index} className="flex gap-2">
+        {rows.map((row, index) => (
+          <div key={row.id} className="flex gap-2">
             <Input
               name={name}
-              defaultValue={value}
+              defaultValue={row.data}
               placeholder={placeholder}
               aria-label={`${label} รายการที่ ${index + 1}`}
             />
             <button
               type="button"
-              onClick={() => setRows((r) => r.filter((_, i) => i !== index))}
+              onClick={() => removeAt(index)}
               aria-label={`ลบ${label}รายการที่ ${index + 1}`}
               className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-input text-muted-foreground transition-colors hover:border-destructive hover:text-destructive"
             >
@@ -119,7 +162,7 @@ export function RepeatableInput({
       </div>
       <button
         type="button"
-        onClick={() => setRows((r) => [...r, ''])}
+        onClick={add}
         className="mt-2 inline-flex items-center gap-1.5 text-sm text-accent transition-opacity hover:opacity-80"
       >
         <Plus size={15} strokeWidth={2} />
@@ -150,25 +193,25 @@ export function PairInput({
   valueMultiline?: boolean
   addLabel?: string
 }) {
-  const [rows, setRows] = useState(initial.length ? initial : [{ key: '', value: '' }])
+  const { rows, add, removeAt } = useRows(initial, { key: '', value: '' })
 
   return (
     <fieldset>
       <legend className="mb-2 text-sm font-medium">{label}</legend>
       <div className="space-y-3">
         {rows.map((row, index) => (
-          <div key={index} className="flex gap-2">
+          <div key={row.id} className="flex gap-2">
             <div className="grid flex-1 gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)]">
               <Input
                 name={`${name}Key`}
-                defaultValue={row.key}
+                defaultValue={row.data.key}
                 placeholder={keyPlaceholder}
                 aria-label={`${label} หัวข้อรายการที่ ${index + 1}`}
               />
               {valueMultiline ? (
                 <textarea
                   name={`${name}Value`}
-                  defaultValue={row.value}
+                  defaultValue={row.data.value}
                   placeholder={valuePlaceholder}
                   aria-label={`${label} รายละเอียดรายการที่ ${index + 1}`}
                   className="min-h-[2.75rem] w-full rounded-md border border-input bg-surface px-3.5 py-2.5 text-sm transition-colors hover:border-foreground/25 focus:border-ring"
@@ -177,7 +220,7 @@ export function PairInput({
               ) : (
                 <Input
                   name={`${name}Value`}
-                  defaultValue={row.value}
+                  defaultValue={row.data.value}
                   placeholder={valuePlaceholder}
                   aria-label={`${label} ค่ารายการที่ ${index + 1}`}
                 />
@@ -185,7 +228,7 @@ export function PairInput({
             </div>
             <button
               type="button"
-              onClick={() => setRows((r) => r.filter((_, i) => i !== index))}
+              onClick={() => removeAt(index)}
               aria-label={`ลบ${label}รายการที่ ${index + 1}`}
               className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-input text-muted-foreground transition-colors hover:border-destructive hover:text-destructive"
             >
@@ -196,7 +239,7 @@ export function PairInput({
       </div>
       <button
         type="button"
-        onClick={() => setRows((r) => [...r, { key: '', value: '' }])}
+        onClick={add}
         className="mt-2 inline-flex items-center gap-1.5 text-sm text-accent transition-opacity hover:opacity-80"
       >
         <Plus size={15} strokeWidth={2} />

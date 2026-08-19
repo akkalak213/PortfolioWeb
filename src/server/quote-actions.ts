@@ -4,7 +4,11 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { QuoteStatus } from '@/generated/prisma/enums'
 import { db } from '@/lib/db'
+import { isMailConfigured } from '@/lib/env'
+import { toNumber } from '@/lib/format'
+import { sendMail } from '@/lib/mail'
 import { computeQuoteTotals, lineAmount } from '@/lib/quote-math'
+import { quoteEmail } from '@/lib/quote-email'
 import type { AdminActionState } from './admin-state'
 import { integer, number, optionalText, requireEditor, text } from './cms-helpers'
 
@@ -147,12 +151,16 @@ export async function updateQuoteStatus(formData: FormData) {
   const status = text(formData, 'status') as QuoteStatus
 
   try {
+    const existing = await db.quote.findUnique({ where: { id }, select: { sentAt: true } })
+
     await db.quote.update({
       where: { id },
       data: {
         status,
-        sentAt: status === 'SENT' ? new Date() : undefined,
-        acceptedAt: status === 'ACCEPTED' ? new Date() : undefined,
+        // วันที่ส่งเป็นจุดเริ่มนับกำหนดยืนราคา กดสถานะซ้ำจึงต้องไม่ขยับวันแรกที่ส่งไป
+        sentAt: status === 'SENT' ? (existing?.sentAt ?? new Date()) : undefined,
+        // ล้างเมื่อไม่ได้อยู่ในสถานะตอบรับแล้ว ไม่งั้นกดผิดแล้วแก้ ไทม์ไลน์จะยังโชว์ว่าลูกค้าตอบรับ
+        acceptedAt: status === 'ACCEPTED' ? new Date() : null,
       },
     })
   } catch (error) {
@@ -175,4 +183,113 @@ export async function deleteQuote(formData: FormData) {
 
   revalidatePath('/admin/quotes')
   redirect('/admin/quotes')
+}
+
+/**
+ * ส่งใบเสนอราคาให้ลูกค้าทางอีเมล แล้วเลื่อนสถานะเป็น "ส่งแล้ว" ให้อัตโนมัติ
+ *
+ * เขียนรายการทั้งใบลงในตัวอีเมล ไม่ได้แนบ PDF และไม่ได้ส่งลิงก์ให้กดเข้ามาดู
+ * เพราะลิงก์สาธารณะที่เปิดดูใบเสนอราคาได้แปลว่าตัวเลขราคาหลุดออกไปนอกการควบคุม
+ * ส่วน PDF ยังออกได้จากปุ่มสั่งพิมพ์ในหน้ารายละเอียด แล้วแนบส่งเองถ้าลูกค้าขอ
+ */
+export async function sendQuoteToCustomer(
+  _prev: AdminActionState,
+  formData: FormData,
+): Promise<AdminActionState> {
+  await requireEditor()
+
+  const id = text(formData, 'id')
+  if (!id) return { status: 'error', message: 'ไม่พบใบเสนอราคา' }
+
+  if (!isMailConfigured) {
+    return {
+      status: 'error',
+      message: 'ยังส่งอีเมลไม่ได้ — ต้องตั้งค่า RESEND_API_KEY, MAIL_FROM และ MAIL_TO ก่อน',
+    }
+  }
+
+  const quote = await db.quote.findUnique({
+    where: { id },
+    include: { items: { orderBy: { order: 'asc' } } },
+  })
+  if (!quote) return { status: 'error', message: 'ไม่พบใบเสนอราคานี้ อาจถูกลบไปแล้ว' }
+  if (!quote.customerEmail) {
+    return { status: 'error', message: 'ใบเสนอราคานี้ยังไม่มีอีเมลลูกค้า กรอกก่อนแล้วบันทึก' }
+  }
+
+  const rows = await db.siteSetting.findMany({ where: { key: { in: ['company', 'quote'] } } })
+  const settings = Object.fromEntries(rows.map((row) => [row.key, row.value])) as Record<
+    string,
+    Record<string, string> | undefined
+  >
+  const company = settings.company ?? {}
+  const bank = settings.quote ?? {}
+  const isEnglish = quote.locale === 'en'
+
+  const { subject, html } = quoteEmail({
+    quoteNumber: quote.quoteNumber,
+    customerName: quote.customerName,
+    locale: quote.locale,
+    issueDate: quote.issueDate,
+    validUntil: quote.validUntil,
+    lines: quote.items.map((item) => ({
+      description: item.description,
+      quantity: toNumber(item.quantity) ?? 0,
+      unit: item.unit,
+      amount: toNumber(item.amount) ?? 0,
+    })),
+    subtotal: toNumber(quote.subtotal) ?? 0,
+    discount: toNumber(quote.discount) ?? 0,
+    vatRate: toNumber(quote.vatRate) ?? 0,
+    vatAmount: toNumber(quote.vatAmount) ?? 0,
+    withholdingRate: toNumber(quote.withholdingRate) ?? 0,
+    withholdingAmount: toNumber(quote.withholdingAmount) ?? 0,
+    total: toNumber(quote.total) ?? 0,
+    notes: quote.notes,
+    terms: quote.termsText,
+    companyName:
+      (isEnglish ? company.nameEn : company.legalNameTh || company.nameTh) || 'Alexan Production',
+    companyPhone: company.phone ?? '',
+    companyEmail: company.email ?? '',
+    bankName: bank.bankName ?? '',
+    bankAccountName: bank.bankAccountName ?? '',
+    bankAccountNumber: bank.bankAccountNumber ?? '',
+  })
+
+  // ตอบกลับให้ไปเข้ากล่องจริงของทีม ไม่ใช่ที่อยู่ no-reply ที่ใช้ส่งออก
+  const result = await sendMail(quote.customerEmail, {
+    subject,
+    html,
+    replyTo: company.email || undefined,
+  })
+
+  if (!result.sent) {
+    return { status: 'error', message: `ส่งอีเมลไม่สำเร็จ — ${result.reason}` }
+  }
+
+  try {
+    await db.quote.update({
+      where: { id },
+      // ส่งซ้ำต้องไม่ทับเวลาที่ส่งครั้งแรก ซึ่งเป็นวันที่ใช้อ้างอิงเวลานับกำหนดยืนราคา
+      data: { status: 'SENT', sentAt: quote.sentAt ?? new Date() },
+    })
+
+    if (quote.leadId) {
+      await db.lead.update({ where: { id: quote.leadId }, data: { status: 'QUOTED' } })
+      revalidatePath(`/admin/leads/${quote.leadId}`)
+      revalidatePath('/admin/leads')
+    }
+  } catch (error) {
+    console.error('[quote:sendToCustomer] อัปเดตสถานะไม่สำเร็จ', error)
+    return {
+      status: 'error',
+      message: 'ส่งอีเมลออกไปแล้ว แต่อัปเดตสถานะในระบบไม่สำเร็จ กรุณาเปลี่ยนสถานะเป็น "ส่งแล้ว" เอง',
+    }
+  }
+
+  revalidatePath('/admin/quotes')
+  revalidatePath(`/admin/quotes/${id}`)
+  revalidatePath('/admin')
+
+  return { status: 'success', message: `ส่งใบเสนอราคาไปที่ ${quote.customerEmail} แล้ว` }
 }

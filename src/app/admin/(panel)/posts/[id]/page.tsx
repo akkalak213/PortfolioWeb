@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import { AdminPageHeader } from '@/components/admin/AdminPage'
 import { PostForm } from '@/components/admin/PostForm'
 import { getAdminPost } from '@/server/admin-queries'
+import { versionOf } from '@/server/cms-helpers'
 
 export const metadata: Metadata = { title: 'แก้ไขบทความ' }
 
@@ -17,6 +18,7 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
       <PostForm
         post={{
           id: post.id,
+          version: versionOf(post.updatedAt),
           slug: post.slug,
           titleTh: post.titleTh,
           titleEn: post.titleEn,

@@ -2,15 +2,19 @@
 
 import { X } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { LeadForm } from '@/components/forms/LeadForm'
+import { scrollIntoViewSoftly } from '@/lib/scroll'
 import { EquipmentCard, type EquipmentCardData } from './EquipmentCard'
+import { EquipmentDetailDialog } from './EquipmentDetailDialog'
 
 export function RentalCatalog({ items }: { items: EquipmentCardData[] }) {
   const t = useTranslations('rental')
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [isFormOpen, setIsFormOpen] = useState(false)
+  const [openId, setOpenId] = useState<string | null>(null)
+  const formRef = useRef<HTMLDivElement>(null)
 
   const toggle = (id: string) =>
     setSelectedIds((current) =>
@@ -18,6 +22,22 @@ export function RentalCatalog({ items }: { items: EquipmentCardData[] }) {
     )
 
   const selected = items.filter((item) => selectedIds.includes(item.id))
+  const openItem = items.find((item) => item.id === openId) ?? null
+
+  /**
+   * ฟอร์มโผล่ต่อท้ายรายการอุปกรณ์ซึ่งมักยาวเกินหนึ่งหน้าจอ
+   * ถ้าไม่พาสายตาลงไปเอง ลูกค้าจะกดปุ่มแล้วเห็นหน้าจอนิ่งสนิท เหมือนกดไม่ติด
+   */
+  useEffect(() => {
+    if (isFormOpen) scrollIntoViewSoftly(formRef.current)
+  }, [isFormOpen])
+
+  /** กดขอใบเสนอราคาจากในกล่องรายละเอียด — ติ๊กชิ้นนั้นให้ ปิดกล่อง แล้วพาลงไปที่ฟอร์ม */
+  const requestQuoteFor = (id: string) => {
+    setSelectedIds((current) => (current.includes(id) ? current : [...current, id]))
+    setOpenId(null)
+    setIsFormOpen(true)
+  }
 
   if (items.length === 0) {
     return (
@@ -36,10 +56,19 @@ export function RentalCatalog({ items }: { items: EquipmentCardData[] }) {
               item={item}
               isSelected={selectedIds.includes(item.id)}
               onToggle={toggle}
+              onOpen={setOpenId}
             />
           </li>
         ))}
       </ul>
+
+      <EquipmentDetailDialog
+        item={openItem}
+        isSelected={openItem ? selectedIds.includes(openItem.id) : false}
+        onToggle={toggle}
+        onRequestQuote={requestQuoteFor}
+        onClose={() => setOpenId(null)}
+      />
 
       {/*
         แถบสรุปลอยด้านล่าง โผล่เมื่อเลือกอุปกรณ์แล้ว
@@ -62,7 +91,10 @@ export function RentalCatalog({ items }: { items: EquipmentCardData[] }) {
       )}
 
       {isFormOpen && (
-        <div className="mt-12 rounded-lg border border-border bg-surface p-7 md:p-9">
+        <div
+          ref={formRef}
+          className="mt-12 scroll-mt-24 rounded-lg border border-border bg-surface p-7 md:p-9"
+        >
           <div className="mb-6 flex items-start justify-between gap-4">
             <p className="text-sm text-muted-foreground">
               {t('selectedCount', { count: selected.length })}

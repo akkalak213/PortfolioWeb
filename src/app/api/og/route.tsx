@@ -1,3 +1,5 @@
+import { readFile } from 'node:fs/promises'
+import { join } from 'node:path'
 import { ImageResponse } from 'next/og'
 import type { NextRequest } from 'next/server'
 
@@ -14,6 +16,27 @@ const FONT_URL =
   'https://cdn.jsdelivr.net/fontsource/fonts/noto-sans-thai@latest/thai-600-normal.ttf'
 
 let fontCache: ArrayBuffer | null = null
+let logoCache: string | null = null
+
+/**
+ * โลโก้ในรูปพรีวิว
+ *
+ * อ่านไฟล์จากดิสก์แล้วฝังเป็น data URI ไม่ได้ยิง HTTP ไปเอารูปของตัวเอง
+ * เพราะตอนที่ Facebook หรือ LINE มาขอรูปนี้ครั้งแรก โดเมนอาจยังไม่ชี้มาที่เซิร์ฟเวอร์
+ * (และตอน dev ก็ไม่ต้องพึ่ง NEXT_PUBLIC_SITE_URL ให้ตั้งถูกก่อน)
+ */
+async function loadLogo(): Promise<string | null> {
+  if (logoCache) return logoCache
+
+  try {
+    const bytes = await readFile(join(process.cwd(), 'public', 'logo.png'))
+    logoCache = `data:image/png;base64,${bytes.toString('base64')}`
+    return logoCache
+  } catch {
+    // ไม่มีไฟล์ก็ยังสร้างการ์ดได้ แค่ไม่มีโลโก้ — ดีกว่าแชร์แล้วไม่มีรูปเลย
+    return null
+  }
+}
 
 async function loadThaiFont(): Promise<ArrayBuffer | null> {
   if (fontCache) return fontCache
@@ -36,7 +59,7 @@ export async function GET(request: NextRequest) {
   const title = (searchParams.get('title') ?? 'Alexan Production').slice(0, 110)
   const eyebrow = (searchParams.get('eyebrow') ?? 'โปรดักชันเฮาส์ครบวงจร').slice(0, 60)
 
-  const font = await loadThaiFont()
+  const [font, logo] = await Promise.all([loadThaiFont(), loadLogo()])
 
   return new ImageResponse(
     (
@@ -66,8 +89,13 @@ export async function GET(request: NextRequest) {
           }}
         />
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          <div style={{ width: 10, height: 10, borderRadius: 9999, background: '#F0A868' }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
+          {logo ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={logo} alt="" width={96} height={96} />
+          ) : (
+            <div style={{ width: 10, height: 10, borderRadius: 9999, background: '#F0A868' }} />
+          )}
           <span style={{ color: '#F0A868', fontSize: 22, letterSpacing: 2 }}>{eyebrow}</span>
         </div>
 

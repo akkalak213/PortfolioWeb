@@ -2,6 +2,7 @@ import { Clock, Mail, MapPin, MessageCircle, Phone } from 'lucide-react'
 import type { Metadata } from 'next'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import type { Locale } from '@/i18n/routing'
+import { pageMetadata } from '@/lib/seo'
 import { LeadForm } from '@/components/forms/LeadForm'
 import { formatPrice, toNumber } from '@/lib/format'
 import { getSiteSettings } from '@/lib/settings'
@@ -30,11 +31,12 @@ export async function generateMetadata({
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: 'contact' })
 
-  return {
+  return pageMetadata({
+    locale,
+    path: '/contact',
     title: t('metaTitle'),
     description: t('metaDescription'),
-    alternates: { canonical: `/${locale}/contact` },
-  }
+  })
 }
 
 export default async function ContactPage({
@@ -114,7 +116,14 @@ export default async function ContactPage({
         </div>
 
         <div className="reveal-stagger mt-14 grid gap-12 lg:grid-cols-[1.4fr_1fr] lg:gap-20">
-          <div className="rounded-lg border border-border bg-surface p-7 md:p-9">
+          {/*
+            จุดหมายของลิงก์ "เลือกแพ็กเกจนี้" จากหน้าบริการ
+            พาลูกค้ามาหยุดตรงฟอร์มพร้อมสรุปแพ็กเกจที่เลือก ไม่ใช่ปล่อยไว้บนหัวเรื่องแล้วต้องหาเอง
+          */}
+          <div
+            id="lead-form"
+            className="scroll-mt-24 rounded-lg border border-border bg-surface p-7 md:p-9"
+          >
             <h2 className="mb-7 font-display text-2xl">{t('formTitle')}</h2>
             <LeadForm
               source={initialPackage ? 'QUOTE' : 'CONTACT'}

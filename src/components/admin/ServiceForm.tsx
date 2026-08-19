@@ -2,7 +2,13 @@
 
 import { useActionState } from 'react'
 import { AdminCard } from '@/components/admin/AdminPage'
-import { BilingualTabs, PairInput, RepeatableInput, SubmitButton } from '@/components/admin/AdminUI'
+import {
+  BilingualTabs,
+  PairInput,
+  RepeatableInput,
+  SubmitButton,
+  VersionField,
+} from '@/components/admin/AdminUI'
 import { ImageField } from '@/components/admin/ImageField'
 import { Field, FormMessage, Input, Select, Textarea } from '@/components/ui/Form'
 import { iconMap } from '@/lib/icons'
@@ -11,6 +17,8 @@ import { saveService } from '@/server/cms-actions'
 
 export type ServiceFormData = {
   id: string
+  /** เวลาแก้ล่าสุดของระเบียนที่หน้านี้เรนเดอร์มา — กันการบันทึกทับข้อมูลที่ใหม่กว่า */
+  version: string
   slug: string
   icon: string
   coverImage: string
@@ -36,7 +44,7 @@ export function ServiceForm({ service }: { service: ServiceFormData }) {
   return (
     <form action={formAction} className="space-y-6">
       <input type="hidden" name="id" value={service.id} />
-      <input type="hidden" name="slug" value={service.slug} />
+      <VersionField initial={service.version} state={state} />
 
       <AdminCard title="การแสดงผล">
         <div className="grid gap-5 sm:grid-cols-3">

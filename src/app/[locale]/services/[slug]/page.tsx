@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
 import type { Locale } from '@/i18n/routing'
+import { pageMetadata } from '@/lib/seo'
 import { Badge } from '@/components/ui/Badge'
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
 import { Faq, type FaqItem } from '@/components/ui/Faq'
@@ -77,12 +78,14 @@ export async function generateMetadata({
     (isThai ? service.seoDescriptionTh : service.seoDescriptionEn) ??
     (isThai ? service.taglineTh : service.taglineEn)
 
-  return {
+  return pageMetadata({
+    locale,
+    path: `/services/${slug}`,
     title,
     description,
-    alternates: { canonical: `/${locale}/services/${slug}` },
-    openGraph: { title, description, images: service.coverImage ? [service.coverImage] : undefined },
-  }
+    image: service.coverImage,
+    modifiedTime: service.updatedAt.toISOString(),
+  })
 }
 
 export default async function ServiceDetailPage({
@@ -170,8 +173,9 @@ export default async function ServiceDetailPage({
               <div className="rounded-lg border border-border bg-subtle p-7">
                 <h2 className="mb-5 text-sm font-medium">{t('highlightsTitle')}</h2>
                 <ul className="space-y-3">
-                  {highlights.map((item) => (
-                    <li key={item} className="flex gap-3 text-sm text-muted-foreground">
+                  {/* ข้อความอิสระที่แอดมินพิมพ์เอง ซ้ำกันได้ จึงยึดลำดับเป็น key */}
+                  {highlights.map((item, index) => (
+                    <li key={index} className="flex gap-3 text-sm text-muted-foreground">
                       <Check size={16} strokeWidth={2} aria-hidden className="mt-0.5 shrink-0 text-accent" />
                       <span className="text-pretty">{item}</span>
                     </li>
@@ -187,7 +191,7 @@ export default async function ServiceDetailPage({
         <Section tone="subtle" eyebrow={t('processTitle')} title={t('processSubtitle')}>
           <ol className="reveal-stagger grid gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-2 lg:grid-cols-4">
             {process.map((step, index) => (
-              <li key={step.title} className="bg-background p-7">
+              <li key={index} className="bg-background p-7">
                 <span className="tabular font-display text-3xl text-accent">
                   {String(index + 1).padStart(2, '0')}
                 </span>
@@ -247,8 +251,8 @@ export default async function ServiceDetailPage({
                         {t('includes')}
                       </p>
                       <ul className="flex-1 space-y-2.5">
-                        {includes.map((item) => (
-                          <li key={item} className="flex gap-2.5 text-sm text-muted-foreground">
+                        {includes.map((item, index) => (
+                          <li key={index} className="flex gap-2.5 text-sm text-muted-foreground">
                             <Check size={15} strokeWidth={2} aria-hidden className="mt-0.5 shrink-0 text-accent" />
                             <span className="text-pretty">{item}</span>
                           </li>
@@ -261,9 +265,12 @@ export default async function ServiceDetailPage({
                     ลิงก์ธรรมดา ไม่ใช่ปุ่มที่ต้องรอ JavaScript
                     ส่งไปแค่ id แล้วให้หน้า /contact อ่านชื่อกับราคาจากฐานข้อมูลเอง
                     ราคาจึงเป็นค่าจริงเสมอและแก้จากแถบที่อยู่ไม่ได้
+
+                    #lead-form พาไปหยุดตรงฟอร์มเลย ลูกค้าจะเห็นทันทีว่าแพ็กเกจที่กดมาถูกติดไปด้วยแล้ว
+                    และรู้ว่าขั้นตอนต่อไปคือกรอกอะไร แทนที่จะไปโผล่บนหัวหน้าเว็บแล้วต้องเลื่อนหาเอง
                   */}
                   <Link
-                    href={`/contact?package=${pkg.id}`}
+                    href={`/contact?package=${pkg.id}#lead-form`}
                     className={cn(
                       'mt-7 inline-flex h-11 w-full items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors',
                       pkg.isPopular

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { PrintButton } from '@/components/admin/PrintButton'
@@ -71,23 +72,39 @@ export default async function QuotePrintPage({ params }: { params: Promise<{ id:
       {/* กระดาษ A4 — ระยะขอบและขนาดตัวอักษรตั้งเป็นหน่วยมิลลิเมตร/พอยต์ ให้พิมพ์ออกมาตรงกับที่เห็น */}
       <article className="mx-auto w-[210mm] max-w-full bg-white p-[15mm] text-[10pt] leading-relaxed text-black shadow-lift print:w-auto print:p-0 print:shadow-none">
         <header className="flex items-start justify-between gap-8 border-b-2 border-black pb-5">
-          <div>
-            <p className="text-[15pt] font-bold leading-tight">
-              {company.legalNameTh || company.nameTh || 'Alexan Production'}
-            </p>
-            {company.addressTh && (
-              <p className="mt-1.5 max-w-[85mm] text-[8.5pt] leading-snug text-neutral-600">
-                {isEnglish ? company.addressEn || company.addressTh : company.addressTh}
+          <div className="flex gap-4">
+            {/*
+              โลโก้บนหัวเอกสาร — สั่งพิมพ์ด้วย print-color-adjust ไม่งั้นเบราว์เซอร์
+              จะตัดพื้นหลังทึบทิ้งตอนพิมพ์ตามค่าเริ่มต้น แล้วเหลือแต่วงกลมขาว
+            */}
+            <Image
+              src="/logo.png"
+              alt=""
+              width={512}
+              height={512}
+              className="h-[20mm] w-[20mm] shrink-0 [print-color-adjust:exact]"
+              unoptimized
+            />
+            <div>
+              <p className="text-[15pt] font-bold leading-tight">
+                {(isEnglish
+                  ? company.nameEn || company.nameTh
+                  : company.legalNameTh || company.nameTh) || 'Alexan Production'}
               </p>
-            )}
-            <p className="mt-1 text-[8.5pt] text-neutral-600">
-              {[company.phone, company.email].filter(Boolean).join(' · ')}
-            </p>
-            {company.taxId && (
-              <p className="text-[8.5pt] text-neutral-600">
-                {t.taxId} {company.taxId}
+              {company.addressTh && (
+                <p className="mt-1.5 max-w-[80mm] text-[8.5pt] leading-snug text-neutral-600">
+                  {isEnglish ? company.addressEn || company.addressTh : company.addressTh}
+                </p>
+              )}
+              <p className="mt-1 text-[8.5pt] text-neutral-600">
+                {[company.phone, company.email].filter(Boolean).join(' · ')}
               </p>
-            )}
+              {company.taxId && (
+                <p className="text-[8.5pt] text-neutral-600">
+                  {t.taxId} {company.taxId}
+                </p>
+              )}
+            </div>
           </div>
 
           <div className="shrink-0 text-right">

@@ -56,7 +56,7 @@ export const equipmentCategoryLabels: Record<EquipmentCategory, string> = {
   LENS: 'เลนส์',
   LIGHTING: 'ไฟและแสง',
   AUDIO: 'อุปกรณ์เสียง',
-  GRIP: 'ขาตั้งและจิมบอล',
+  GRIP: 'ขาตั้งและกิมบอล',
   DRONE: 'โดรน',
   ACCESSORY: 'อุปกรณ์เสริม',
 }

@@ -15,16 +15,24 @@ type SendArgs = {
   replyTo?: string
 }
 
-export async function sendInternalNotification({ subject, html, replyTo }: SendArgs) {
+export type MailResult = { sent: true } | { sent: false; reason: string }
+
+/**
+ * ส่งอีเมลออกไปหาปลายทางที่ระบุ
+ *
+ * ต่างจาก sendInternalNotification ตรงที่ตัวนี้ "บอกได้ว่าทำไมไม่สำเร็จ"
+ * เพราะการส่งใบเสนอราคาให้ลูกค้าเป็นสิ่งที่แอดมินกดเองและต้องรู้ผลทันที
+ * ต่างจากเมลแจ้งเตือนภายในที่ล้มเงียบ ๆ ได้โดยไม่กระทบใคร
+ */
+export async function sendMail(to: string, { subject, html, replyTo }: SendArgs): Promise<MailResult> {
   if (!resend) {
-    console.info('[mail] ข้ามการส่งอีเมล — ยังไม่ได้ตั้งค่า Resend')
-    return { sent: false as const }
+    return { sent: false, reason: 'ยังไม่ได้ตั้งค่า Resend (RESEND_API_KEY, MAIL_FROM, MAIL_TO)' }
   }
 
   try {
     const { error } = await resend.emails.send({
       from: serverEnv.MAIL_FROM!,
-      to: serverEnv.MAIL_TO!,
+      to,
       subject,
       html,
       replyTo,
@@ -32,15 +40,25 @@ export async function sendInternalNotification({ subject, html, replyTo }: SendA
 
     if (error) {
       console.error('[mail] Resend ปฏิเสธคำขอ', error)
-      return { sent: false as const }
+      return { sent: false, reason: error.message || 'ผู้ให้บริการอีเมลปฏิเสธคำขอ' }
     }
 
-    return { sent: true as const }
+    return { sent: true }
   } catch (error) {
-    // ส่งเมลไม่สำเร็จต้องไม่ทำให้ลูกค้าเห็นหน้า error ทั้งที่ข้อมูลบันทึกแล้ว
     console.error('[mail] ส่งอีเมลไม่สำเร็จ', error)
+    return { sent: false, reason: 'ติดต่อผู้ให้บริการอีเมลไม่ได้' }
+  }
+}
+
+export async function sendInternalNotification({ subject, html, replyTo }: SendArgs) {
+  if (!resend) {
+    console.info('[mail] ข้ามการส่งอีเมล — ยังไม่ได้ตั้งค่า Resend')
     return { sent: false as const }
   }
+
+  // ส่งเมลแจ้งเตือนไม่สำเร็จต้องไม่ทำให้ลูกค้าเห็นหน้า error ทั้งที่ข้อมูลบันทึกแล้ว
+  const result = await sendMail(serverEnv.MAIL_TO!, { subject, html, replyTo })
+  return { sent: result.sent }
 }
 
 /** หนีอักขระ HTML ก่อนยัดข้อความจากผู้ใช้ลงในเทมเพลตอีเมล */

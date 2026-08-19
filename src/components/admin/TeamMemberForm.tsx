@@ -1,7 +1,7 @@
 'use client'
 
 import { useActionState } from 'react'
-import { SubmitButton } from '@/components/admin/AdminUI'
+import { SubmitButton, VersionField } from '@/components/admin/AdminUI'
 import { ImageField } from '@/components/admin/ImageField'
 import { Field, FormMessage, Input, Textarea } from '@/components/ui/Form'
 import { initialAdminState } from '@/server/admin-state'
@@ -9,6 +9,8 @@ import { deleteTeamMember, saveTeamMember } from '@/server/cms-actions'
 
 export type TeamMemberFormData = {
   id: string
+  /** เวลาแก้ล่าสุดของระเบียนที่หน้านี้เรนเดอร์มา — กันการบันทึกทับข้อมูลที่ใหม่กว่า */
+  version: string
   name: string
   roleTh: string
   roleEn: string
@@ -23,6 +25,7 @@ export type TeamMemberFormData = {
 
 export const emptyTeamMember: TeamMemberFormData = {
   id: '',
+  version: '',
   name: '',
   roleTh: '',
   roleEn: '',
@@ -44,7 +47,12 @@ export function TeamMemberForm({ member }: { member: TeamMemberFormData }) {
   return (
     <div className="rounded-lg border border-border bg-surface p-5">
       <form action={formAction} className="space-y-5">
-        {isEditing && <input type="hidden" name="id" value={member.id} />}
+        {isEditing && (
+          <>
+            <input type="hidden" name="id" value={member.id} />
+            <VersionField initial={member.version} state={state} />
+          </>
+        )}
 
         <div className="grid gap-5 sm:grid-cols-2">
           <Field htmlFor={`name-${member.id}`} label="ชื่อ" required>

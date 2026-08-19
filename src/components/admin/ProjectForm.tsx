@@ -3,7 +3,13 @@
 import Link from 'next/link'
 import { useActionState } from 'react'
 import { ContentStatus, ServiceCategory } from '@/generated/prisma/enums'
-import { BilingualTabs, PairInput, RepeatableInput, SubmitButton } from '@/components/admin/AdminUI'
+import {
+  BilingualTabs,
+  PairInput,
+  RepeatableInput,
+  SubmitButton,
+  VersionField,
+} from '@/components/admin/AdminUI'
 import { AdminCard } from '@/components/admin/AdminPage'
 import { ImageField, ImageListField } from '@/components/admin/ImageField'
 import { buttonClasses } from '@/components/ui/Button'
@@ -14,6 +20,8 @@ import { deleteProject, saveProject } from '@/server/cms-actions'
 
 export type ProjectFormData = {
   id: string
+  /** เวลาแก้ล่าสุดของระเบียนที่หน้านี้เรนเดอร์มา — กันการบันทึกทับข้อมูลที่ใหม่กว่า */
+  version: string
   slug: string
   category: ServiceCategory
   titleTh: string
@@ -40,6 +48,7 @@ export type ProjectFormData = {
 
 export const emptyProject: ProjectFormData = {
   id: '',
+  version: '',
   slug: '',
   category: 'WEB',
   titleTh: '',
@@ -71,7 +80,12 @@ export function ProjectForm({ project }: { project: ProjectFormData }) {
   return (
     <div className="space-y-6">
       <form action={formAction} className="space-y-6">
-        {isEditing && <input type="hidden" name="id" value={project.id} />}
+        {isEditing && (
+          <>
+            <input type="hidden" name="id" value={project.id} />
+            <VersionField initial={project.version} state={state} />
+          </>
+        )}
 
         <AdminCard title="ข้อมูลหลัก">
           <div className="grid gap-5 sm:grid-cols-2">

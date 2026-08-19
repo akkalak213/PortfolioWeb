@@ -1,8 +1,9 @@
-import { ArrowLeft, Building2, Mail, Phone } from 'lucide-react'
+import { ArrowLeft, Building2, FileText, Mail, Phone } from 'lucide-react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { LeadNoteForm } from '@/components/admin/LeadNoteForm'
+import { buttonClasses } from '@/components/ui/Button'
 import { LeadStatusForm } from '@/components/admin/LeadStatusForm'
 import {
   budgetLabels,
@@ -92,8 +93,11 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
                   >
                     <span>{item.labelSnapshot}</span>
                     {item.equipment ? (
+                      // ลิงก์ไปหน้าแก้ไขของชิ้นนั้นตรง ๆ
+                      // ของเดิมส่ง ?highlight=<slug> ไปหน้ารายการซึ่งไม่มีโค้ดอ่านค่านั้นเลย
+                      // กดแล้วจึงได้แค่รายการอุปกรณ์ทั้งหมด ต้องไปไล่หาเองอยู่ดี
                       <Link
-                        href={`/admin/equipment?highlight=${item.equipment.slug}`}
+                        href={`/admin/equipment/${item.equipment.id}`}
                         className="text-xs text-accent hover:underline"
                       >
                         ดูอุปกรณ์
@@ -184,7 +188,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
           <section className="rounded-lg border border-border bg-surface p-5">
             <h2 className="mb-4 font-medium">ใบเสนอราคา</h2>
             {lead.quotes.length === 0 ? (
-              <p className="text-sm text-muted-foreground">ยังไม่ได้ออกใบเสนอราคาให้คำขอนี้</p>
+              <p className="mb-4 text-sm text-muted-foreground">ยังไม่ได้ออกใบเสนอราคาให้คำขอนี้</p>
             ) : (
               <ul className="space-y-2">
                 {lead.quotes.map((quote) => (
@@ -203,9 +207,17 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
                 ))}
               </ul>
             )}
-            <p className="mt-3 text-xs text-muted-foreground">
-              ระบบออกใบเสนอราคาอยู่ระหว่างพัฒนา
-            </p>
+            {/*
+              ดึงชื่อ อีเมล เบอร์ และอุปกรณ์ที่ลูกค้าเลือกไว้ไปตั้งเป็นรายการตั้งต้นให้เลย
+              ทีมขายจึงเหลือแค่ใส่ราคา ไม่ต้องพิมพ์ข้อมูลลูกค้าซ้ำจากหน้านี้
+            */}
+            <Link
+              href={`/admin/quotes/new?leadId=${lead.id}`}
+              className={buttonClasses('primary', 'sm', 'mt-4 w-full')}
+            >
+              <FileText size={15} strokeWidth={1.75} aria-hidden />
+              {lead.quotes.length === 0 ? 'ออกใบเสนอราคา' : 'ออกใบเสนอราคาอีกฉบับ'}
+            </Link>
           </section>
         </aside>
       </div>

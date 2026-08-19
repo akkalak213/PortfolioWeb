@@ -4,6 +4,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { EquipmentCategory } from '@/generated/prisma/enums'
 import { Link } from '@/i18n/navigation'
 import type { Locale } from '@/i18n/routing'
+import { pageMetadata } from '@/lib/seo'
 import type { EquipmentCardData } from '@/components/rental/EquipmentCard'
 import { RentalCatalog } from '@/components/rental/RentalCatalog'
 import { Section } from '@/components/ui/Section'
@@ -35,11 +36,12 @@ export async function generateMetadata({
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: 'rental' })
 
-  return {
+  return pageMetadata({
+    locale,
+    path: '/rental',
     title: t('metaTitle'),
     description: t('metaDescription'),
-    alternates: { canonical: `/${locale}/rental` },
-  }
+  })
 }
 
 export default async function RentalPage({
@@ -75,8 +77,10 @@ export default async function RentalPage({
     description: isThai ? item.descriptionTh : item.descriptionEn,
     specs: asSpecs(item.specs),
     dailyRateLabel: formatPrice(item.dailyRate, locale),
+    weeklyRateLabel: formatPrice(item.weeklyRate, locale),
     depositLabel: formatPrice(item.depositAmount, locale),
     image: item.image,
+    gallery: item.gallery,
     quantity: item.quantity,
     status: item.status,
   }))

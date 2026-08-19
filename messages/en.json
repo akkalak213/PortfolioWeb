@@ -43,7 +43,8 @@
     "submit": "Submit",
     "sending": "Sending",
     "skipToContent": "Skip to main content",
-    "breadcrumb": "Breadcrumb"
+    "breadcrumb": "Breadcrumb",
+    "close": "Close"
   },
   "theme": {
     "label": "Theme",
@@ -170,6 +171,12 @@
     "perWeek": "per week",
     "deposit": "Deposit",
     "specs": "Specs",
+    "viewDetails": "See details",
+    "openDetails": "See details for {name}",
+    "gallery": "More photos",
+    "noDescription": "No description yet for this item. Ask us about it in your quote request.",
+    "askForPrice": "Ask for a price",
+    "requestThis": "Get a price for this",
     "quantity": "{count} available",
     "select": "Select",
     "selected": "Selected",

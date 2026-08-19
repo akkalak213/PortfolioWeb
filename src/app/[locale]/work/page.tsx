@@ -3,6 +3,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { ServiceCategory } from '@/generated/prisma/enums'
 import { Link } from '@/i18n/navigation'
 import type { Locale } from '@/i18n/routing'
+import { pageMetadata } from '@/lib/seo'
 import { ProjectCard } from '@/components/work/ProjectCard'
 import { Section } from '@/components/ui/Section'
 import { cn } from '@/lib/utils'
@@ -22,11 +23,12 @@ export async function generateMetadata({
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: 'work' })
 
-  return {
+  return pageMetadata({
+    locale,
+    path: '/work',
     title: t('metaTitle'),
     description: t('metaDescription'),
-    alternates: { canonical: `/${locale}/work` },
-  }
+  })
 }
 
 export default async function WorkPage({

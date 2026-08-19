@@ -2,7 +2,9 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { AdminPageHeader } from '@/components/admin/AdminPage'
+import { QuoteActions } from '@/components/admin/QuoteActions'
 import { QuoteForm } from '@/components/admin/QuoteForm'
+import { isMailConfigured } from '@/lib/env'
 import { toNumber } from '@/lib/format'
 import { getQuote } from '@/server/admin-queries'
 
@@ -35,6 +37,21 @@ export default async function EditQuotePage({ params }: { params: Promise<{ id: 
           </Link>
         </p>
       )}
+
+      <QuoteActions
+        id={quote.id}
+        status={quote.status}
+        customerEmail={quote.customerEmail}
+        sentAt={quote.sentAt?.toISOString() ?? null}
+        acceptedAt={quote.acceptedAt?.toISOString() ?? null}
+        // เลยวันยืนราคาแล้วแต่ยังไม่มีคำตอบ — เตือนไว้ก่อนที่จะเผลอไปตามลูกค้าด้วยราคาเก่า
+        isExpired={
+          quote.validUntil < new Date() &&
+          quote.status !== 'ACCEPTED' &&
+          quote.status !== 'DECLINED'
+        }
+        canSendMail={isMailConfigured}
+      />
 
       <QuoteForm
         quote={{

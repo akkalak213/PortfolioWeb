@@ -14,14 +14,18 @@ import type { AdminActionState } from './admin-state'
 import {
   boolean,
   integer,
+  isStaleWrite,
   list,
+  listSignature,
   number,
   optionalText,
   pairs,
   requireAdmin,
   requireEditor,
   slugify,
+  STALE_WRITE_MESSAGE,
   text,
+  versionOf,
 } from './cms-helpers'
 
 /**
@@ -31,8 +35,25 @@ import {
  * สร้างใหม่จะ redirect กลับไปหน้ารายการ ส่วนการแก้จะคืน state ให้แสดงข้อความในหน้าเดิม
  */
 
+/**
+ * ล้างแคชหน้าสาธารณะ
+ *
+ * ต้องส่ง "รูปแบบเส้นทาง" ตามชื่อโฟลเดอร์จริง เช่น '/[locale]/work/[slug]'
+ * ไม่ใช่เส้นทางที่แทน slug จริงลงไปแล้ว เพราะ Next จับคู่แท็กจากรูปแบบเส้นทาง
+ * เส้นทางแบบ '/[locale]/work/ชื่อผลงาน' จะไม่ตรงกับอะไรเลย และไม่มีอะไรถูกล้าง
+ */
 function revalidateSite(...paths: string[]) {
   for (const path of paths) revalidatePath(path, 'page')
+}
+
+/**
+ * ล้างแคชหน้าหลังบ้านที่แสดงข้อมูลชุดเดียวกัน
+ *
+ * สำคัญพอ ๆ กับหน้าสาธารณะ — ถ้าไม่ล้าง หน้ารายการกับหน้าแก้ไขจะยังถือภาพเก่าอยู่
+ * แล้วการกดบันทึกจากหน้าที่เป็นภาพเก่าจะเขียนค่าเก่าทับของใหม่
+ */
+function revalidateAdmin(...paths: string[]) {
+  for (const path of paths) revalidatePath(path)
 }
 
 function failure(error: unknown, label: string): AdminActionState {
@@ -46,6 +67,19 @@ function failure(error: unknown, label: string): AdminActionState {
 
 // ─────────────────────────── ผลงาน ───────────────────────────
 
+/**
+ * ผูกผลงานเข้ากับบริการที่ตรงหมวดกัน
+ *
+ * Service.category เป็น unique หนึ่งหมวดจึงมีบริการเดียวเสมอ
+ * ก่อนหน้านี้ฟอร์มบันทึกแค่ category ทำให้ serviceId ว่างตลอด
+ * และลิงก์ "บริการที่เกี่ยวข้อง" บนหน้ารายละเอียดผลงานไม่เคยขึ้นเลย
+ */
+async function serviceIdFor(category: ServiceCategory): Promise<string | null> {
+  if (!category) return null
+  const service = await db.service.findUnique({ where: { category }, select: { id: true } })
+  return service?.id ?? null
+}
+
 export async function saveProject(
   _prev: AdminActionState,
   formData: FormData,
@@ -55,6 +89,14 @@ export async function saveProject(
   const id = optionalText(formData, 'id')
   const titleTh = text(formData, 'titleTh')
   if (!titleTh) return { status: 'error', message: 'ต้องกรอกชื่อผลงานภาษาไทย' }
+
+  /**
+   * รูปปกเป็นคอลัมน์ที่ห้ามว่างในฐานข้อมูล และหน้าเว็บเอาไปใส่ next/image ตรง ๆ
+   * ดาวจันทร์ในฟอร์มบอกว่าจำเป็น แต่ช่องจริงเป็น input hidden ซึ่งเบราว์เซอร์ไม่ตรวจ required ให้
+   * ถ้าปล่อยผ่าน จะได้ผลงานที่ src เป็นข้อความว่าง แล้วหน้ารวมผลงานพังทั้งหน้า
+   */
+  const coverImage = text(formData, 'coverImage')
+  if (!coverImage) return { status: 'error', message: 'ต้องใส่รูปปกก่อนบันทึก' }
 
   const slug = slugify(text(formData, 'slug') || text(formData, 'titleEn') || titleTh)
   const status = text(formData, 'status') as ContentStatus
@@ -72,7 +114,7 @@ export async function saveProject(
     clientName: optionalText(formData, 'clientName'),
     year: number(formData, 'year'),
     location: optionalText(formData, 'location'),
-    coverImage: text(formData, 'coverImage'),
+    coverImage,
     videoUrl: optionalText(formData, 'videoUrl'),
     liveUrl: optionalText(formData, 'liveUrl'),
     repoUrl: optionalText(formData, 'repoUrl'),
@@ -90,16 +132,22 @@ export async function saveProject(
     if (id) {
       const existing = await db.project.findUnique({
         where: { id },
-        select: { publishedAt: true },
+        select: { publishedAt: true, updatedAt: true },
       })
+      if (!existing) return { status: 'error', message: 'ไม่พบผลงานนี้ อาจถูกลบไปแล้ว' }
+      if (isStaleWrite(text(formData, 'expectedVersion'), existing.updatedAt)) {
+        return { status: 'error', message: STALE_WRITE_MESSAGE }
+      }
 
-      await db.project.update({
+      const updated = await db.project.update({
         where: { id },
         data: {
           ...data,
+          serviceId: await serviceIdFor(data.category),
           publishedAt:
-            status === 'PUBLISHED' ? (existing?.publishedAt ?? new Date()) : null,
+            status === 'PUBLISHED' ? (existing.publishedAt ?? new Date()) : null,
         },
+        select: { updatedAt: true },
       })
 
       // แกลเลอรีแทนที่ทั้งชุด — ง่ายกว่าและตรงกับที่ผู้ใช้เห็นในฟอร์ม
@@ -110,13 +158,19 @@ export async function saveProject(
         })
       }
 
-      revalidateSite('/[locale]/work', `/[locale]/work/${slug}`, '/[locale]')
-      return { status: 'success', message: 'บันทึกผลงานแล้ว' }
+      revalidateSite('/[locale]/work', '/[locale]/work/[slug]', '/[locale]')
+      revalidateAdmin('/admin/projects', `/admin/projects/${id}`, '/admin')
+      return {
+        status: 'success',
+        message: 'บันทึกผลงานแล้ว',
+        version: versionOf(updated.updatedAt),
+      }
     }
 
     const created = await db.project.create({
       data: {
         ...data,
+        serviceId: await serviceIdFor(data.category),
         authorId: user.id,
         media: {
           create: mediaUrls.map((url, index) => ({ url, order: index })),
@@ -124,8 +178,8 @@ export async function saveProject(
       },
     })
 
-    revalidateSite('/[locale]/work', '/[locale]')
-    revalidatePath('/admin/projects')
+    revalidateSite('/[locale]/work', '/[locale]/work/[slug]', '/[locale]')
+    revalidateAdmin('/admin/projects', '/admin')
     redirect(`/admin/projects/${created.id}`)
   } catch (error) {
     // redirect() ทำงานด้วยการโยน error — ต้องปล่อยผ่าน ไม่งั้นจะกลายเป็นข้อความ "บันทึกไม่สำเร็จ"
@@ -147,8 +201,8 @@ export async function deleteProject(formData: FormData) {
     console.error('[cms:deleteProject]', error)
   }
 
-  revalidateSite('/[locale]/work', '/[locale]')
-  revalidatePath('/admin/projects')
+  revalidateSite('/[locale]/work', '/[locale]/work/[slug]', '/[locale]')
+  revalidateAdmin('/admin/projects', '/admin')
   redirect('/admin/projects')
 }
 
@@ -191,14 +245,33 @@ export async function saveEquipment(
 
   try {
     if (id) {
-      await db.equipment.update({ where: { id }, data })
+      const existing = await db.equipment.findUnique({
+        where: { id },
+        select: { updatedAt: true },
+      })
+      if (!existing) return { status: 'error', message: 'ไม่พบอุปกรณ์นี้ อาจถูกลบไปแล้ว' }
+      if (isStaleWrite(text(formData, 'expectedVersion'), existing.updatedAt)) {
+        return { status: 'error', message: STALE_WRITE_MESSAGE }
+      }
+
+      const updated = await db.equipment.update({
+        where: { id },
+        data,
+        select: { updatedAt: true },
+      })
+
       revalidateSite('/[locale]/rental')
-      return { status: 'success', message: 'บันทึกอุปกรณ์แล้ว' }
+      revalidateAdmin('/admin/equipment', `/admin/equipment/${id}`)
+      return {
+        status: 'success',
+        message: 'บันทึกอุปกรณ์แล้ว',
+        version: versionOf(updated.updatedAt),
+      }
     }
 
     await db.equipment.create({ data })
     revalidateSite('/[locale]/rental')
-    revalidatePath('/admin/equipment')
+    revalidateAdmin('/admin/equipment')
     redirect('/admin/equipment')
   } catch (error) {
     if (typeof error === 'object' && error !== null && 'digest' in error) throw error
@@ -218,7 +291,7 @@ export async function deleteEquipment(formData: FormData) {
   }
 
   revalidateSite('/[locale]/rental')
-  revalidatePath('/admin/equipment')
+  revalidateAdmin('/admin/equipment')
   redirect('/admin/equipment')
 }
 
@@ -231,11 +304,18 @@ export async function saveService(
   await requireEditor()
 
   const id = text(formData, 'id')
-  const slug = text(formData, 'slug')
 
+  const existing = await db.service.findUnique({ where: { id }, select: { updatedAt: true } })
+  if (!existing) return { status: 'error', message: 'ไม่พบบริการนี้' }
+  if (isStaleWrite(text(formData, 'expectedVersion'), existing.updatedAt)) {
+    return { status: 'error', message: STALE_WRITE_MESSAGE }
+  }
+
+  let updatedAt: Date
   try {
-    await db.service.update({
+    ;({ updatedAt } = await db.service.update({
       where: { id },
+      select: { updatedAt: true },
       data: {
         titleTh: text(formData, 'titleTh'),
         titleEn: text(formData, 'titleEn'),
@@ -254,13 +334,28 @@ export async function saveService(
         isActive: boolean(formData, 'isActive'),
         order: integer(formData, 'order'),
       },
-    })
+    }))
   } catch (error) {
     return failure(error, 'saveService')
   }
 
-  revalidateSite('/[locale]/services', `/[locale]/services/${slug}`, '/[locale]')
-  return { status: 'success', message: 'บันทึกบริการแล้ว' }
+  revalidateSite('/[locale]/services', '/[locale]/services/[slug]', '/[locale]')
+  revalidateAdmin('/admin/services', `/admin/services/${id}`)
+  return { status: 'success', message: 'บันทึกบริการแล้ว', version: versionOf(updatedAt) }
+}
+
+/**
+ * ลายเซ็นของชุดแพ็กเกจ ณ ตอนนี้
+ *
+ * ถ้าลายเซ็นที่ฟอร์มส่งกลับมาไม่ตรงกับของจริง แปลว่าหน้านั้นเป็นภาพก่อนที่จะมีใครบันทึกไป
+ */
+async function packageSignature(serviceId: string): Promise<string> {
+  const rows = await db.servicePackage.findMany({
+    where: { serviceId },
+    orderBy: { order: 'asc' },
+    select: { id: true },
+  })
+  return listSignature(rows.map((row) => row.id))
 }
 
 export async function saveServicePackages(
@@ -270,7 +365,6 @@ export async function saveServicePackages(
   await requireEditor()
 
   const serviceId = text(formData, 'serviceId')
-  const slug = text(formData, 'slug')
 
   const nameTh = formData.getAll('pkgNameTh').map((v) => String(v).trim())
   const nameEn = formData.getAll('pkgNameEn').map((v) => String(v).trim())
@@ -295,15 +389,33 @@ export async function saveServicePackages(
     }))
     .filter((row) => row.nameTh)
 
+  /**
+   * การบันทึกนี้ลบแพ็กเกจเดิมทิ้งทั้งชุดแล้วสร้างใหม่ — เป็น action ที่ทำลายข้อมูลมากที่สุดใน CMS
+   * ถ้าหน้าที่กดบันทึกเป็นภาพเก่า แพ็กเกจที่คนอื่นเพิ่งเพิ่มจะหายไปโดยไม่มีใครรู้
+   * จึงเทียบ "ลายเซ็น" ของชุดแพ็กเกจปัจจุบันก่อนเสมอ (id เปลี่ยนทุกครั้งที่บันทึก จึงใช้เป็นเวอร์ชันได้)
+   */
+  const current = await packageSignature(serviceId)
+  if (isStaleWrite(text(formData, 'expectedVersion'), current)) {
+    return { status: 'error', message: STALE_WRITE_MESSAGE }
+  }
+
   try {
-    await db.servicePackage.deleteMany({ where: { serviceId } })
-    if (rows.length) await db.servicePackage.createMany({ data: rows })
+    // แทนที่ทั้งชุดในทรานแซกชันเดียว ถ้าสร้างใหม่ล้มกลางทางของเดิมต้องไม่หายไปเฉย ๆ
+    await db.$transaction([
+      db.servicePackage.deleteMany({ where: { serviceId } }),
+      ...(rows.length ? [db.servicePackage.createMany({ data: rows })] : []),
+    ])
   } catch (error) {
     return failure(error, 'saveServicePackages')
   }
 
-  revalidateSite(`/[locale]/services/${slug}`)
-  return { status: 'success', message: `บันทึก ${rows.length} แพ็กเกจแล้ว` }
+  revalidateSite('/[locale]/services', '/[locale]/services/[slug]', '/[locale]')
+  revalidateAdmin('/admin/services', `/admin/services/${serviceId}`)
+  return {
+    status: 'success',
+    message: `บันทึก ${rows.length} แพ็กเกจแล้ว`,
+    version: await packageSignature(serviceId),
+  }
 }
 
 // ─────────────────────────── บทความ ───────────────────────────
@@ -340,16 +452,31 @@ export async function savePost(
 
   try {
     if (id) {
-      const existing = await db.post.findUnique({ where: { id }, select: { publishedAt: true } })
-      await db.post.update({
+      const existing = await db.post.findUnique({
         where: { id },
+        select: { publishedAt: true, updatedAt: true },
+      })
+      if (!existing) return { status: 'error', message: 'ไม่พบบทความนี้ อาจถูกลบไปแล้ว' }
+      if (isStaleWrite(text(formData, 'expectedVersion'), existing.updatedAt)) {
+        return { status: 'error', message: STALE_WRITE_MESSAGE }
+      }
+
+      const updated = await db.post.update({
+        where: { id },
+        select: { updatedAt: true },
         data: {
           ...data,
-          publishedAt: status === 'PUBLISHED' ? (existing?.publishedAt ?? new Date()) : null,
+          publishedAt: status === 'PUBLISHED' ? (existing.publishedAt ?? new Date()) : null,
         },
       })
-      revalidateSite('/[locale]/blog', `/[locale]/blog/${slug}`)
-      return { status: 'success', message: 'บันทึกบทความแล้ว' }
+
+      revalidateSite('/[locale]/blog', '/[locale]/blog/[slug]', '/[locale]')
+      revalidateAdmin('/admin/posts', `/admin/posts/${id}`)
+      return {
+        status: 'success',
+        message: 'บันทึกบทความแล้ว',
+        version: versionOf(updated.updatedAt),
+      }
     }
 
     const created = await db.post.create({
@@ -360,8 +487,8 @@ export async function savePost(
       },
     })
 
-    revalidateSite('/[locale]/blog')
-    revalidatePath('/admin/posts')
+    revalidateSite('/[locale]/blog', '/[locale]/blog/[slug]', '/[locale]')
+    revalidateAdmin('/admin/posts')
     redirect(`/admin/posts/${created.id}`)
   } catch (error) {
     if (typeof error === 'object' && error !== null && 'digest' in error) throw error
@@ -380,8 +507,8 @@ export async function deletePost(formData: FormData) {
     console.error('[cms:deletePost]', error)
   }
 
-  revalidateSite('/[locale]/blog')
-  revalidatePath('/admin/posts')
+  revalidateSite('/[locale]/blog', '/[locale]/blog/[slug]', '/[locale]')
+  revalidateAdmin('/admin/posts')
   redirect('/admin/posts')
 }
 
@@ -414,9 +541,25 @@ export async function saveTeamMember(
     order: integer(formData, 'order'),
   }
 
+  let version: string | undefined
+
   try {
     if (id) {
-      await db.teamMember.update({ where: { id }, data })
+      const existing = await db.teamMember.findUnique({
+        where: { id },
+        select: { updatedAt: true },
+      })
+      if (!existing) return { status: 'error', message: 'ไม่พบสมาชิกคนนี้ อาจถูกลบไปแล้ว' }
+      if (isStaleWrite(text(formData, 'expectedVersion'), existing.updatedAt)) {
+        return { status: 'error', message: STALE_WRITE_MESSAGE }
+      }
+
+      const updated = await db.teamMember.update({
+        where: { id },
+        data,
+        select: { updatedAt: true },
+      })
+      version = versionOf(updated.updatedAt)
     } else {
       await db.teamMember.create({ data })
     }
@@ -425,8 +568,8 @@ export async function saveTeamMember(
   }
 
   revalidateSite('/[locale]/about')
-  revalidatePath('/admin/team')
-  return { status: 'success', message: 'บันทึกข้อมูลทีมงานแล้ว' }
+  revalidateAdmin('/admin/team')
+  return { status: 'success', message: 'บันทึกข้อมูลทีมงานแล้ว', version }
 }
 
 export async function deleteTeamMember(formData: FormData) {
@@ -439,7 +582,7 @@ export async function deleteTeamMember(formData: FormData) {
   }
 
   revalidateSite('/[locale]/about')
-  revalidatePath('/admin/team')
+  revalidateAdmin('/admin/team')
 }
 
 // ─────────────────── ข้อมูลบริษัทและค่าตั้งค่า ───────────────────
@@ -507,5 +650,6 @@ export async function saveSettings(
 
   // ข้อมูลบริษัทอยู่ใน footer ของทุกหน้า จึงต้องล้างแคชทั้งเว็บ
   revalidatePath('/', 'layout')
+  revalidateAdmin('/admin/settings')
   return { status: 'success', message: 'บันทึกข้อมูลบริษัทแล้ว' }
 }

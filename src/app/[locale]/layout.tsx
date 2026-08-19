@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { IBM_Plex_Sans_Thai, Inter, Instrument_Serif, JetBrains_Mono } from 'next/font/google'
 import { hasLocale, NextIntlClientProvider } from 'next-intl'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
@@ -11,6 +11,7 @@ import { SiteHeader } from '@/components/layout/SiteHeader'
 import { routing, type Locale } from '@/i18n/routing'
 import { clientEnv } from '@/lib/env'
 import { ogImageUrl } from '@/lib/og'
+import { pageMetadata } from '@/lib/seo'
 import { getSiteSettings } from '@/lib/settings'
 import { organizationSchema, websiteSchema } from '@/lib/structured-data'
 import '../globals.css'
@@ -77,6 +78,20 @@ export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }))
 }
 
+/**
+ * สีของแถบเบราว์เซอร์บนมือถือ ตามธีมที่ผู้ใช้ตั้งไว้
+ *
+ * ค่าตรงกับ --background ของแต่ละธีมใน globals.css
+ * ถ้าไม่ประกาศ Chrome บน Android จะวาดแถบสีขาวคาดอยู่เหนือหน้าเว็บโหมดมืดตลอด
+ */
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: 'hsl(40 23% 98%)' },
+    { media: '(prefers-color-scheme: dark)', color: 'hsl(240 8% 5%)' },
+  ],
+  colorScheme: 'light dark',
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -86,34 +101,35 @@ export async function generateMetadata({
   const t = await getTranslations({ locale, namespace: 'home' })
   const tBrand = await getTranslations({ locale, namespace: 'brand' })
 
+  const base = pageMetadata({
+    locale,
+    path: '',
+    title: t('metaTitle'),
+    description: t('metaDescription'),
+    image: ogImageUrl(t('metaTitle'), tBrand('tagline')),
+  })
+
   return {
+    ...base,
     metadataBase: new URL(clientEnv.NEXT_PUBLIC_SITE_URL),
     title: {
       default: t('metaTitle'),
       template: `%s · ${tBrand('name')}`,
     },
-    description: t('metaDescription'),
-    alternates: {
-      canonical: `/${locale}`,
-      languages: { th: '/th', en: '/en' },
+    applicationName: tBrand('name'),
+    openGraph: { ...base.openGraph, siteName: tBrand('name') },
+    /*
+     * ไม่ประกาศ icons เอง — ปล่อยให้ Next ผูกจากไฟล์ใน src/app
+     * (favicon.ico, icon.png, apple-icon.png) ถ้าประกาศทับ ลิงก์ที่ Next สร้างจะหายไปบางตัว
+     * ส่วนรูปแบรนด์ที่ Google ดึงไปใช้ประกาศไว้ใน JSON-LD แล้ว
+     */
+    manifest: '/manifest.webmanifest',
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1 },
     },
-    openGraph: {
-      type: 'website',
-      siteName: tBrand('name'),
-      locale: locale === 'th' ? 'th_TH' : 'en_US',
-      title: t('metaTitle'),
-      description: t('metaDescription'),
-      images: [
-        {
-          url: ogImageUrl(t('metaTitle'), tBrand('tagline')),
-          width: 1200,
-          height: 630,
-          alt: t('metaTitle'),
-        },
-      ],
-    },
-    twitter: { card: 'summary_large_image' },
-    robots: { index: true, follow: true },
+    formatDetection: { telephone: false },
   }
 }
 

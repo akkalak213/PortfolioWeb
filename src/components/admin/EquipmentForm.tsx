@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useActionState } from 'react'
 import { EquipmentCategory, EquipmentStatus } from '@/generated/prisma/enums'
 import { AdminCard } from '@/components/admin/AdminPage'
-import { BilingualTabs, PairInput, SubmitButton } from '@/components/admin/AdminUI'
+import { BilingualTabs, PairInput, SubmitButton, VersionField } from '@/components/admin/AdminUI'
 import { ImageField, ImageListField } from '@/components/admin/ImageField'
 import { buttonClasses } from '@/components/ui/Button'
 import { Field, FormMessage, Input, Select, Textarea } from '@/components/ui/Form'
@@ -14,6 +14,8 @@ import { deleteEquipment, saveEquipment } from '@/server/cms-actions'
 
 export type EquipmentFormData = {
   id: string
+  /** เวลาแก้ล่าสุดของระเบียนที่หน้านี้เรนเดอร์มา — กันการบันทึกทับข้อมูลที่ใหม่กว่า */
+  version: string
   slug: string
   category: EquipmentCategory
   brand: string
@@ -37,6 +39,7 @@ export type EquipmentFormData = {
 
 export const emptyEquipment: EquipmentFormData = {
   id: '',
+  version: '',
   slug: '',
   category: 'CAMERA',
   brand: '',
@@ -65,7 +68,12 @@ export function EquipmentForm({ item }: { item: EquipmentFormData }) {
   return (
     <div className="space-y-6">
       <form action={formAction} className="space-y-6">
-        {isEditing && <input type="hidden" name="id" value={item.id} />}
+        {isEditing && (
+          <>
+            <input type="hidden" name="id" value={item.id} />
+            <VersionField initial={item.version} state={state} />
+          </>
+        )}
 
         <AdminCard title="ข้อมูลอุปกรณ์">
           <div className="grid gap-5 sm:grid-cols-2">

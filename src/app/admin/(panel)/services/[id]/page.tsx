@@ -5,7 +5,7 @@ import { ServiceForm } from '@/components/admin/ServiceForm'
 import { ServicePackagesForm } from '@/components/admin/ServicePackagesForm'
 import { toNumber } from '@/lib/format'
 import { getAdminService } from '@/server/admin-queries'
-import { toPairRows } from '@/server/cms-helpers'
+import { listSignature, toPairRows, versionOf } from '@/server/cms-helpers'
 
 export const metadata: Metadata = { title: 'แก้ไขบริการ' }
 
@@ -13,6 +13,9 @@ export default async function EditServicePage({ params }: { params: Promise<{ id
   const { id } = await params
   const service = await getAdminService(id)
   if (!service) notFound()
+
+  // แพ็กเกจถูกลบแล้วสร้างใหม่ทุกครั้งที่บันทึก id ยกชุดจึงใช้เป็นเลขเวอร์ชันของรายการได้
+  const packagesVersion = listSignature(service.packages.map((pkg) => pkg.id))
 
   return (
     <div className="mx-auto max-w-3xl space-y-8">
@@ -24,6 +27,7 @@ export default async function EditServicePage({ params }: { params: Promise<{ id
       <ServiceForm
         service={{
           id: service.id,
+          version: versionOf(service.updatedAt),
           slug: service.slug,
           icon: service.icon,
           coverImage: service.coverImage ?? '',
@@ -50,7 +54,7 @@ export default async function EditServicePage({ params }: { params: Promise<{ id
       >
         <ServicePackagesForm
           serviceId={service.id}
-          slug={service.slug}
+          version={packagesVersion}
           initial={service.packages.map((pkg) => ({
             nameTh: pkg.nameTh,
             nameEn: pkg.nameEn,

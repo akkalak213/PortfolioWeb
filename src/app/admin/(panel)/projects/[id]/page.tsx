@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { AdminPageHeader } from '@/components/admin/AdminPage'
 import { ProjectForm } from '@/components/admin/ProjectForm'
-import { toPairRows } from '@/server/cms-helpers'
+import { toPairRows, versionOf } from '@/server/cms-helpers'
 import { getAdminProject } from '@/server/admin-queries'
 
 export const metadata: Metadata = { title: 'แก้ไขผลงาน' }
@@ -21,6 +21,7 @@ export default async function EditProjectPage({ params }: { params: Promise<{ id
       <ProjectForm
         project={{
           id: project.id,
+          version: versionOf(project.updatedAt),
           slug: project.slug,
           category: project.category,
           titleTh: project.titleTh,

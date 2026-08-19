@@ -44,6 +44,8 @@ export async function ProjectCard({ project, locale, featured, priority }: Props
             featured ? 'aspect-[16/9]' : 'aspect-[4/3]',
           )}
         >
+          {/* ผลงานเก่าบางชิ้นอาจไม่มีรูปปก — next/image กับ src ว่างจะโยน error ทั้งหน้า */}
+          {project.coverImage && (
           <Image
             src={project.coverImage}
             alt=""
@@ -54,6 +56,7 @@ export async function ProjectCard({ project, locale, featured, priority }: Props
             blurDataURL={project.coverBlurData ?? undefined}
             className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
           />
+          )}
         </div>
 
         <div className="mt-5">

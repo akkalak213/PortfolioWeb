@@ -43,6 +43,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...withAlternates('/blog', { changeFrequency: 'weekly', priority: 0.7 }),
     ...withAlternates('/about', { priority: 0.6 }),
     ...withAlternates('/contact', { priority: 0.8 }),
+    // หน้ากฎหมายไม่ได้ช่วยเรื่องอันดับ แต่ Google ใช้ประกอบการตัดสินว่าเว็บนี้เป็นธุรกิจจริง
+    ...withAlternates('/privacy', { changeFrequency: 'yearly', priority: 0.2 }),
+    ...withAlternates('/terms', { changeFrequency: 'yearly', priority: 0.2 }),
 
     ...services.flatMap((s) => withAlternates(`/services/${s.slug}`, { priority: 0.8 })),
     ...projects.flatMap((p) => withAlternates(`/work/${p.slug}`, { priority: 0.7 })),

@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
 import type { Locale } from '@/i18n/routing'
+import { pageMetadata } from '@/lib/seo'
 import { Badge } from '@/components/ui/Badge'
 import { Section } from '@/components/ui/Section'
 import { formatDate } from '@/lib/format'
@@ -31,11 +32,12 @@ export async function generateMetadata({
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: 'blog' })
 
-  return {
+  return pageMetadata({
+    locale,
+    path: '/blog',
     title: t('metaTitle'),
     description: t('metaDescription'),
-    alternates: { canonical: `/${locale}/blog` },
-  }
+  })
 }
 
 export default async function BlogPage({ params }: { params: Promise<{ locale: Locale }> }) {

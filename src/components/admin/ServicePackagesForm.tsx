@@ -3,7 +3,7 @@
 import { Plus, Trash2 } from 'lucide-react'
 import { useActionState, useState } from 'react'
 import { PriceUnit } from '@/generated/prisma/enums'
-import { SubmitButton } from '@/components/admin/AdminUI'
+import { SubmitButton, VersionField } from '@/components/admin/AdminUI'
 import { FormMessage, Input, Select, Textarea } from '@/components/ui/Form'
 import { priceUnitLabels } from '@/lib/admin-labels'
 import { initialAdminState } from '@/server/admin-state'
@@ -31,29 +31,42 @@ const blankRow: PackageRow = {
 
 export function ServicePackagesForm({
   serviceId,
-  slug,
+  version,
   initial,
 }: {
   serviceId: string
-  slug: string
+  /** ลายเซ็นของชุดแพ็กเกจที่หน้านี้เรนเดอร์มา — กันการลบทับของที่คนอื่นเพิ่งบันทึกไป */
+  version: string
   initial: PackageRow[]
 }) {
   const [state, formAction] = useActionState(saveServicePackages, initialAdminState)
-  const [rows, setRows] = useState<PackageRow[]>(initial.length ? initial : [blankRow])
-  const [popular, setPopular] = useState(() => {
-    const index = initial.findIndex((row) => row.isPopular)
-    return index >= 0 ? String(index) : ''
-  })
+
+  /**
+   * แต่ละแถวถือ id ของตัวเอง เพราะช่องกรอกเป็นแบบ uncontrolled
+   * ถ้าใช้ดัชนีเป็น key การลบแพ็กเกจกลาง ๆ จะทำให้ค่าใน DOM ของแถวที่เหลือไม่เลื่อนตาม
+   * กลายเป็นลบใบหนึ่งแต่ข้อมูลของอีกใบหายไปแทน
+   */
+  const [rows, setRows] = useState(() =>
+    (initial.length ? initial : [blankRow]).map((row, index) => ({ id: index, row })),
+  )
+
+  /** อ้างด้วย id ไม่ใช่ดัชนี ลบแถวไหนไปแล้ว ตัวที่ติ๊กไว้ยังเป็นใบเดิมเสมอ */
+  const [popularId, setPopularId] = useState<number | null>(
+    () => rows.find((entry) => entry.row.isPopular)?.id ?? null,
+  )
+
+  // ฝั่ง server จับคู่แพ็กเกจยอดนิยมจากลำดับที่ส่งไป จึงต้องแปลง id กลับเป็นดัชนีปัจจุบันตอนส่ง
+  const popularIndex = rows.findIndex((entry) => entry.id === popularId)
 
   return (
     <form action={formAction} className="space-y-5">
       <input type="hidden" name="serviceId" value={serviceId} />
-      <input type="hidden" name="slug" value={slug} />
-      <input type="hidden" name="pkgPopular" value={popular} />
+      <VersionField initial={version} state={state} />
+      <input type="hidden" name="pkgPopular" value={popularIndex >= 0 ? popularIndex : ''} />
 
       <div className="space-y-5">
-        {rows.map((row, index) => (
-          <div key={index} className="rounded-lg border border-border p-4">
+        {rows.map(({ id, row }, index) => (
+          <div key={id} className="rounded-lg border border-border p-4">
             <div className="mb-4 flex items-center justify-between gap-3">
               <p className="text-sm font-medium text-muted-foreground">แพ็กเกจที่ {index + 1}</p>
               <div className="flex items-center gap-3">
@@ -61,8 +74,8 @@ export function ServicePackagesForm({
                   <input
                     type="radio"
                     name="popularPicker"
-                    checked={popular === String(index)}
-                    onChange={() => setPopular(String(index))}
+                    checked={popularId === id}
+                    onChange={() => setPopularId(id)}
                     className="accent-[hsl(var(--accent))]"
                   />
                   เลือกมากที่สุด
@@ -70,8 +83,8 @@ export function ServicePackagesForm({
                 <button
                   type="button"
                   onClick={() => {
-                    setRows((r) => r.filter((_, i) => i !== index))
-                    if (popular === String(index)) setPopular('')
+                    setRows((r) => r.filter((entry) => entry.id !== id))
+                    if (popularId === id) setPopularId(null)
                   }}
                   aria-label={`ลบแพ็กเกจที่ ${index + 1}`}
                   className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-input text-muted-foreground transition-colors hover:border-destructive hover:text-destructive"
@@ -130,7 +143,12 @@ export function ServicePackagesForm({
 
       <button
         type="button"
-        onClick={() => setRows((r) => [...r, blankRow])}
+        onClick={() =>
+          setRows((r) => [
+            ...r,
+            { id: r.reduce((max, entry) => Math.max(max, entry.id), -1) + 1, row: blankRow },
+          ])
+        }
         className="inline-flex items-center gap-1.5 text-sm text-accent transition-opacity hover:opacity-80"
       >
         <Plus size={15} strokeWidth={2} />

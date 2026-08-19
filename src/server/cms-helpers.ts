@@ -17,6 +17,47 @@ export async function requireAdmin() {
   return user
 }
 
+/**
+ * กันการบันทึกทับข้อมูลที่ใหม่กว่า (optimistic concurrency)
+ *
+ * ฟอร์มแก้ไขทุกใบพก "เวลาแก้ล่าสุด" ของระเบียนที่ตัวเองเรนเดอร์มาด้วยเสมอ
+ * ถ้าค่าที่ส่งกลับมาไม่ตรงกับในฐานข้อมูล แปลว่าหน้าที่กำลังกรอกอยู่เป็นภาพเก่า
+ * (เปิดค้างไว้สองแท็บ กดปุ่มย้อนกลับ หรือมีคนอื่นแก้ไปแล้ว) — ต้องไม่ยอมให้เขียนทับ
+ */
+export const STALE_WRITE_MESSAGE =
+  'ข้อมูลชุดนี้ถูกแก้ไปแล้วหลังจากเปิดหน้านี้ กดรีเฟรชหน้าเพื่อดึงของล่าสุดก่อนบันทึกอีกครั้ง ไม่งั้นของใหม่จะถูกเขียนทับ'
+
+/** แปลงเป็นข้อความรูปแบบเดียวกันทั้งฝั่งที่เขียนลงฟอร์มและฝั่งที่เทียบค่า */
+export function versionOf(value: Date | string | null | undefined): string {
+  if (!value) return ''
+  return value instanceof Date ? value.toISOString() : new Date(value).toISOString()
+}
+
+/**
+ * ฟอร์มเก่ากว่าฐานข้อมูลหรือไม่
+ *
+ * ฟอร์มที่ไม่ได้ส่งค่ามาถือว่าผ่าน (ฟอร์มสร้างใหม่ยังไม่มีระเบียนให้เทียบ)
+ * current เป็นได้ทั้ง Date (เวลาแก้ล่าสุด) และข้อความ (ลายเซ็นของชุดข้อมูล เช่น รายการแพ็กเกจ)
+ */
+export function isStaleWrite(
+  submitted: string,
+  current: Date | string | null | undefined,
+): boolean {
+  if (!submitted || current === null || current === undefined) return false
+  return submitted !== (current instanceof Date ? versionOf(current) : current)
+}
+
+/**
+ * ลายเซ็นของรายการที่ถูกลบแล้วสร้างใหม่ทั้งชุดทุกครั้งที่บันทึก (เช่น แพ็กเกจของบริการ)
+ * id เปลี่ยนยกชุดทุกครั้ง จึงใช้แทน "เวอร์ชัน" ของรายการได้
+ *
+ * รายการว่างต้องไม่คืนข้อความว่าง ไม่งั้น isStaleWrite จะมองว่าฟอร์มไม่ได้ส่งค่ามาแล้วปล่อยผ่าน
+ * ซึ่งจะเปิดช่องให้หน้าที่เห็นว่า "ยังไม่มีแพ็กเกจ" ไปลบทับของที่คนอื่นเพิ่งเพิ่มไว้
+ */
+export function listSignature(ids: string[]): string {
+  return ids.length ? ids.join(',') : 'empty'
+}
+
 /** ช่องข้อความว่างควรเก็บเป็น null ไม่ใช่ '' เพื่อให้เช็คเงื่อนไขในหน้าเว็บง่าย */
 export function text(formData: FormData, key: string): string {
   return String(formData.get(key) ?? '').trim()

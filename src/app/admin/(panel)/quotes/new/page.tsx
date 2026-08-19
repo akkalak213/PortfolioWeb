@@ -20,6 +20,15 @@ export default async function NewQuotePage({
   const quoteDefaults = settings.quote ?? {}
   const validUntil = defaultValidUntil(Number(quoteDefaults.defaultValidDays ?? 30))
 
+  /**
+   * ลูกค้าที่ติดต่อมาเป็นภาษาอังกฤษต้องได้เงื่อนไขภาษาอังกฤษ
+   * ของเดิมหยิบ termsTh มาเสมอ ทำให้เอกสารภาษาอังกฤษมีเงื่อนไขเป็นภาษาไทยปนอยู่ท้ายใบ
+   */
+  const isEnglish = lead?.locale === 'en'
+  const defaultTerms = isEnglish
+    ? String(quoteDefaults.termsEn ?? quoteDefaults.termsTh ?? '')
+    : String(quoteDefaults.termsTh ?? '')
+
   // มาจากคำขอเช่าอุปกรณ์ ให้ตั้งรายการตั้งต้นจากอุปกรณ์ที่ลูกค้าเลือกไว้
   const items: QuoteLineRow[] =
     lead?.items.map((item) => ({
@@ -57,7 +66,7 @@ export default async function NewQuotePage({
           vatRate: String(quoteDefaults.defaultVatRate ?? 7),
           withholdingRate: String(quoteDefaults.defaultWithholdingRate ?? 3),
           notes: '',
-          termsText: String(quoteDefaults.termsTh ?? ''),
+          termsText: defaultTerms,
           status: 'DRAFT',
           items,
         }}

@@ -24,7 +24,7 @@ export function LoginForm() {
           required
           autoComplete="username"
           autoFocus
-          placeholder="admin@alexanproduction.com"
+          placeholder="admin@alexanprod.studio"
         />
       </Field>
 

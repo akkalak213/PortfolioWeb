@@ -4,7 +4,7 @@ import { AdminPageHeader } from '@/components/admin/AdminPage'
 import { EquipmentForm } from '@/components/admin/EquipmentForm'
 import { toNumber } from '@/lib/format'
 import { getAdminEquipmentItem } from '@/server/admin-queries'
-import { toPairRows } from '@/server/cms-helpers'
+import { toPairRows, versionOf } from '@/server/cms-helpers'
 
 export const metadata: Metadata = { title: 'แก้ไขอุปกรณ์' }
 
@@ -25,6 +25,7 @@ export default async function EditEquipmentPage({ params }: { params: Promise<{ 
       <EquipmentForm
         item={{
           id: item.id,
+          version: versionOf(item.updatedAt),
           slug: item.slug,
           category: item.category,
           brand: item.brand,

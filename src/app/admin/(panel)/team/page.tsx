@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { AdminPageHeader } from '@/components/admin/AdminPage'
 import { emptyTeamMember, TeamMemberForm } from '@/components/admin/TeamMemberForm'
 import { getAdminTeam } from '@/server/admin-queries'
+import { versionOf } from '@/server/cms-helpers'
 
 export const metadata: Metadata = { title: 'ทีมงาน' }
 
@@ -21,6 +22,7 @@ export default async function AdminTeamPage() {
             key={member.id}
             member={{
               id: member.id,
+              version: versionOf(member.updatedAt),
               name: member.name,
               roleTh: member.roleTh,
               roleEn: member.roleEn,
@@ -37,7 +39,8 @@ export default async function AdminTeamPage() {
 
         <div>
           <h2 className="mb-3 font-medium">เพิ่มสมาชิกใหม่</h2>
-          <TeamMemberForm member={emptyTeamMember} />
+          {/* key ผูกกับจำนวนสมาชิก — เพิ่มคนใหม่สำเร็จแล้วฟอร์มจะว่างเปล่าให้เอง กันการกดซ้ำจนได้คนซ้ำ */}
+          <TeamMemberForm key={`new-${team.length}`} member={emptyTeamMember} />
         </div>
       </div>
     </div>

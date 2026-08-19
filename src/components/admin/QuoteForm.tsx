@@ -305,15 +305,6 @@ export function QuoteForm({ quote }: { quote: QuoteFormData }) {
 
         <div className="flex flex-wrap items-center gap-3">
           <SubmitButton size="lg">{isEditing ? 'บันทึกการแก้ไข' : 'สร้างใบเสนอราคา'}</SubmitButton>
-          {isEditing && (
-            <Link
-              href={`/admin/print/quote/${quote.id}`}
-              target="_blank"
-              className={buttonClasses('outline', 'lg')}
-            >
-              พิมพ์ / บันทึกเป็น PDF
-            </Link>
-          )}
           <Link href="/admin/quotes" className={buttonClasses('ghost', 'lg')}>
             ยกเลิก
           </Link>
