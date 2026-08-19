@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { PrintButton } from '@/components/admin/PrintButton'
+import { PrintButton } from '@/components/ui/PrintButton'
 import { bahtText } from '@/lib/baht-text'
 import { toNumber } from '@/lib/format'
 import { getAdminSettings, getQuote } from '@/server/admin-queries'
@@ -66,7 +66,7 @@ export default async function QuotePrintPage({ params }: { params: Promise<{ id:
         >
           กลับไปแก้ไข
         </Link>
-        <PrintButton />
+        <PrintButton label="พิมพ์ / บันทึกเป็น PDF" />
       </div>
 
       {/* กระดาษ A4 — ระยะขอบและขนาดตัวอักษรตั้งเป็นหน่วยมิลลิเมตร/พอยต์ ให้พิมพ์ออกมาตรงกับที่เห็น */}

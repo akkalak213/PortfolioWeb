@@ -48,6 +48,26 @@ export type SiteSettings = {
   hero: HeroSettings
 }
 
+/**
+ * ค่าตั้งต้นของใบเสนอราคา
+ *
+ * หน้าเว็บสาธารณะต้องใช้ด้วย ไม่ใช่แค่หลังบ้าน เพราะใบเสนอราคาเบื้องต้นที่ลูกค้ากดเอง
+ * ต้องคิด VAT ยืนราคา และแสดงเงื่อนไขด้วยค่าชุดเดียวกับที่ทีมขายใช้ออกเอกสารจริง
+ */
+export type QuoteDefaults = {
+  defaultValidDays: number
+  defaultVatRate: number
+  termsTh: string
+  termsEn: string
+}
+
+const quoteDefaults: QuoteDefaults = {
+  defaultValidDays: 30,
+  defaultVatRate: 7,
+  termsTh: '',
+  termsEn: '',
+}
+
 const defaults: SiteSettings = {
   company: {
     nameTh: 'อเล็กซาน โปรดักชั่น',
@@ -94,5 +114,22 @@ export const getSiteSettings = cache(async (): Promise<SiteSettings> => {
   } catch {
     // ยังไม่ได้ตั้งฐานข้อมูล หรือฐานข้อมูลล่ม — แสดงค่า default ไปก่อน
     return defaults
+  }
+})
+
+export const getQuoteDefaults = cache(async (): Promise<QuoteDefaults> => {
+  try {
+    const row = await db.siteSetting.findUnique({ where: { key: 'quote' } })
+    const stored = (row?.value ?? {}) as Partial<QuoteDefaults>
+
+    return {
+      // ค่าที่กรอกในหลังบ้านเป็น JSON จึงไม่มีอะไรรับประกันชนิด ต้องแปลงเองทุกตัว
+      defaultValidDays: Number(stored.defaultValidDays) || quoteDefaults.defaultValidDays,
+      defaultVatRate: Number(stored.defaultVatRate ?? quoteDefaults.defaultVatRate),
+      termsTh: String(stored.termsTh ?? ''),
+      termsEn: String(stored.termsEn ?? ''),
+    }
+  } catch {
+    return quoteDefaults
   }
 })

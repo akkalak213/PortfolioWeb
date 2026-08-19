@@ -178,6 +178,29 @@ export const getEquipment = cache((category?: EquipmentCategory) =>
   ),
 )
 
+/**
+ * อุปกรณ์ที่ลูกค้าติ๊กไว้ เพื่อเอาไปทำใบเสนอราคาเบื้องต้น
+ *
+ * URL ส่งมาแค่ id เหมือนหน้าแพ็กเกจ ราคาอ่านจากฐานข้อมูลที่นี่เสมอ
+ * แก้ตัวเลขจากแถบที่อยู่ไม่ได้ และเอกสารที่ลูกค้าถือจะตรงกับเรตจริงในระบบวันนั้น
+ *
+ * เรียงตามลำดับที่ตั้งไว้ในหลังบ้าน ไม่ใช่ตามลำดับที่ส่งมาใน URL
+ * เพื่อให้เอกสารของลูกค้าสองคนที่เลือกของชุดเดียวกันหน้าตาเหมือนกัน
+ */
+export const getEquipmentByIds = cache((ids: string[]) =>
+  safe(
+    'equipment-by-ids',
+    () =>
+      ids.length
+        ? db.equipment.findMany({
+            where: { id: { in: ids }, isActive: true },
+            orderBy: [{ category: 'asc' }, { order: 'asc' }],
+          })
+        : Promise.resolve([]),
+    [],
+  ),
+)
+
 export const getEquipmentCountsByCategory = cache(() =>
   safe(
     'equipment-counts',

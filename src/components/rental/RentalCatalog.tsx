@@ -1,9 +1,10 @@
 'use client'
 
-import { X } from 'lucide-react'
+import { FileText, X } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useEffect, useRef, useState } from 'react'
-import { Button } from '@/components/ui/Button'
+import { Link } from '@/i18n/navigation'
+import { Button, buttonClasses } from '@/components/ui/Button'
 import { LeadForm } from '@/components/forms/LeadForm'
 import { scrollIntoViewSoftly } from '@/lib/scroll'
 import { EquipmentCard, type EquipmentCardData } from './EquipmentCard'
@@ -11,6 +12,7 @@ import { EquipmentDetailDialog } from './EquipmentDetailDialog'
 
 export function RentalCatalog({ items }: { items: EquipmentCardData[] }) {
   const t = useTranslations('rental')
+  const tEstimate = useTranslations('estimate')
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [openId, setOpenId] = useState<string | null>(null)
@@ -79,10 +81,24 @@ export function RentalCatalog({ items }: { items: EquipmentCardData[] }) {
           <p className="text-sm" aria-live="polite">
             {t('selectedCount', { count: selected.length })}
           </p>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button variant="ghost" size="sm" onClick={() => setSelectedIds([])}>
               {t('clearSelection')}
             </Button>
+            {/*
+              ใบเสนอราคาเบื้องต้นเป็นลิงก์ ไม่ใช่ปุ่มที่ต้องรอ JavaScript
+              ส่งไปแค่ id แล้วให้หน้าปลายทางอ่านเรตจากฐานข้อมูลเอง ราคาจึงเป็นค่าจริงเสมอ
+            */}
+            <Link
+              href={{
+                pathname: '/rental/estimate',
+                query: { items: selectedIds.join(','), days: 1 },
+              }}
+              className={buttonClasses('outline', 'sm')}
+            >
+              <FileText size={14} strokeWidth={1.75} aria-hidden />
+              {tEstimate('estimateCta')}
+            </Link>
             <Button variant="accent" size="sm" onClick={() => setIsFormOpen(true)}>
               {t('requestSelected')}
             </Button>
